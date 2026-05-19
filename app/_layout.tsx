@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Notifications from 'expo-notifications';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   useFonts,
@@ -12,10 +13,21 @@ import {
 } from '@expo-google-fonts/nunito';
 import { initDB } from '../db';
 import { useHicStore } from '../store';
+import { scheduleAllNotifications } from '../services/notifications';
 import '../global.css';
 
 // Prevent splash screen from auto-hiding before fonts + DB are ready
 SplashScreen.preventAutoHideAsync();
+
+// Foreground notification display
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function RootLayout() {
   const loadFromDB = useHicStore((s) => s.loadFromDB);
@@ -31,6 +43,12 @@ export default function RootLayout() {
       try {
         await initDB();
         await loadFromDB();
+
+        // Schedule local notifications (only if onboarding complete)
+        const { user } = useHicStore.getState();
+        if (user?.onboarding_complete === 1) {
+          await scheduleAllNotifications();
+        }
       } catch (e) {
         console.error('[HiC] init error:', e);
       } finally {

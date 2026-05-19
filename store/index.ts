@@ -24,6 +24,7 @@ interface HicStore {
   miDiaLog: MiDiaEntry[];
   photos: Photo[];
   navigationContext: NavigationContext;
+  isHydrated: boolean;
 
   // Hydration
   loadFromDB: () => Promise<void>;
@@ -56,6 +57,7 @@ export const useHicStore = create<HicStore>((set, get) => ({
   miDiaLog: [],
   photos: [],
   navigationContext: {},
+  isHydrated: false,
 
   // Hydration: reads all tables from SQLite and populates store
   loadFromDB: async () => {
@@ -65,7 +67,7 @@ export const useHicStore = create<HicStore>((set, get) => ({
       getMiDiaLog(),
       getPhotos(),
     ]);
-    set({ user, goals, miDiaLog, photos });
+    set({ user, goals, miDiaLog, photos, isHydrated: true });
   },
 
   // User

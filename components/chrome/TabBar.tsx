@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { router, usePathname } from 'expo-router';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../primitives/Icon';
 
 const TABS = [
@@ -13,9 +14,13 @@ const TABS = [
 
 export function TabBar(_props: BottomTabBarProps) {
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View className="h-20 w-full bg-surface border-t border-border flex-row justify-around items-start pt-3 flex-shrink-0">
+    <View
+      className="w-full bg-surface border-t border-border flex-row justify-around items-start flex-shrink-0"
+      style={{ paddingTop: 12, paddingBottom: insets.bottom + 8 }}
+    >
       {TABS.map((tab) => {
         const isActive = pathname.includes(tab.name);
         const color = isActive ? '#e87a3f' : '#70787c';

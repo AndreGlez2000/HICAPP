@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Alert, KeyboardAvoidingView, Platform, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { View, Text, ScrollView, Alert, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useHicStore, Categoria } from '../../store';
-import { loadDemoDataFresh } from '../../db/seed';
 import { Button } from '../../components/primitives/Button';
 import { Input } from '../../components/primitives/Input';
 import { Stepper } from '../../components/primitives/Stepper';
@@ -35,19 +34,6 @@ export default function OnboardingScreen() {
   const [suenoTitulo, setSuenoTitulo] = useState('');
 
   const [error, setError] = useState('');
-  const [loadingDemo, setLoadingDemo] = useState(false);
-
-  const handleDemoMode = async () => {
-    setLoadingDemo(true);
-    try {
-      await loadDemoDataFresh();
-      await useHicStore.getState().loadFromDB();
-      router.replace('/(tabs)/metas');
-    } catch (e) {
-      Alert.alert('Error', 'No se pudo cargar el modo demo');
-      setLoadingDemo(false);
-    }
-  };
 
   const nextStep = (next: Step) => {
     setError('');
@@ -143,21 +129,6 @@ export default function OnboardingScreen() {
 
             {/* Spacer flexible */}
             <View style={{ flex: 1 }} />
-
-            {/* Modo demo */}
-            <TouchableOpacity
-              onPress={handleDemoMode}
-              disabled={loadingDemo}
-              style={{ alignItems: 'center', marginBottom: 8 }}
-            >
-              {loadingDemo ? (
-                <ActivityIndicator size="small" color="#e87a3f" />
-              ) : (
-                <Text style={{ fontFamily: 'Nunito_400Regular', fontSize: 14, color: '#e87a3f' }}>
-                  Probar modo demo →
-                </Text>
-              )}
-            </TouchableOpacity>
           </View>
         );
       case 1:
