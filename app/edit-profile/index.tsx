@@ -12,6 +12,8 @@ import { useHicStore } from '../../store';
 import { ScreenHeader } from '../../components/chrome/ScreenHeader';
 import { Button } from '../../components/primitives/Button';
 import { Input } from '../../components/primitives/Input';
+import { DatePickerField } from '../../components/primitives/DatePickerField';
+import { calculateAge } from '../../utils/age';
 
 export default function EditProfileScreen() {
   const user = useHicStore((s) => s.user);
@@ -19,20 +21,17 @@ export default function EditProfileScreen() {
 
   const [nombre, setNombre] = useState(user?.nombre ?? '');
   const [nickname, setNickname] = useState(user?.nickname ?? '');
-  const [edad, setEdad] = useState(user?.edad ? String(user.edad) : '');
+  const [dob, setDob] = useState(user?.fecha_nacimiento ?? '');
   const [peso, setPeso] = useState(user?.peso ? String(user.peso) : '');
   const [talla, setTalla] = useState(user?.talla ? String(user.talla) : '');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const maxDob = new Date();
+
   const handleSave = async () => {
     if (!nombre.trim()) {
       setError('Por favor, ingresa tu nombre');
-      return;
-    }
-
-    if (edad && isNaN(Number(edad))) {
-      setError('La edad debe ser un número válido');
       return;
     }
     if (peso && isNaN(Number(peso))) {
@@ -48,12 +47,14 @@ export default function EditProfileScreen() {
     setError('');
 
     try {
+      const edad = calculateAge(dob);
       await setUser({
         nombre: nombre.trim(),
         nickname: nickname.trim(),
-        edad: edad ? parseInt(edad, 10) : user?.edad ?? 0,
+        edad,
         peso: peso ? parseFloat(peso) : user?.peso ?? 0,
         talla: talla ? parseFloat(talla) : user?.talla ?? 0,
+        fecha_nacimiento: dob,
       });
       router.back();
     } catch (err) {
@@ -115,13 +116,11 @@ export default function EditProfileScreen() {
 
           <View className="flex-row gap-3">
             <View className="flex-1">
-              <Input
-                label="Edad"
-                value={edad}
-                onChangeText={(t) => { setEdad(t); setError(''); }}
-                placeholder="Ej. 10"
-                keyboardType="numeric"
-                error={error.includes('edad') ? error : undefined}
+              <DatePickerField
+                label="Fecha de nacimiento"
+                value={dob}
+                onChange={(iso) => { setDob(iso); setError(''); }}
+                maxDate={maxDob}
               />
             </View>
             <View className="flex-1">
@@ -148,7 +147,7 @@ export default function EditProfileScreen() {
           />
         </View>
 
-        {error && !error.includes('nombre') && !error.includes('edad') && !error.includes('peso') && !error.includes('talla') && (
+        {error && !error.includes('nombre') && !error.includes('peso') && !error.includes('talla') && (
           <Text className="font-nunito text-xs text-red-600 mb-4">{error}</Text>
         )}
 

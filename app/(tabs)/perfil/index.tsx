@@ -6,6 +6,7 @@ import { getDB } from '../../../db';
 import { ScreenHeader } from '../../../components/chrome/ScreenHeader';
 import { Card } from '../../../components/primitives/Card';
 import { Icon } from '../../../components/primitives/Icon';
+import { calculateAge } from '../../../utils/age';
 
 export default function PerfilScreen() {
   const user = useHicStore((s) => s.user);
@@ -115,7 +116,14 @@ export default function PerfilScreen() {
           <View className="gap-0">
             <InfoRow icon="user" label="Nombre" value={user.nombre} />
             <InfoRow icon="hash" label="Apodo" value={user.nickname} />
-            {user.edad ? <InfoRow icon="calendar" label="Edad" value={`${user.edad} años`} /> : null}
+            {user.fecha_nacimiento ? (
+              <InfoRow
+                icon="calendar"
+                label="Fecha de nacimiento"
+                value={formatDob(user.fecha_nacimiento)}
+              />
+            ) : null}
+            {user.edad ? <InfoRow icon="calendar" label="Edad" value={`${calculateAge(user.fecha_nacimiento)} años`} /> : null}
             {user.peso ? <InfoRow icon="activity" label="Peso" value={`${user.peso} kg`} /> : null}
             {user.talla ? <InfoRow icon="ruler" label="Talla" value={`${user.talla} cm`} /> : null}
             {user.expediente ? <InfoRow icon="file-text" label="Expediente" value={user.expediente} last /> : null}
@@ -175,6 +183,13 @@ function InfoRow({
       <Text className="font-nunito text-sm text-ink flex-1">{value}</Text>
     </View>
   );
+}
+
+function formatDob(value: string): string {
+  if (!value) return '';
+  const [y, m, d] = value.split('-');
+  if (!y || !m || !d) return value;
+  return `${d}/${m}/${y}`;
 }
 
 function NavRow({

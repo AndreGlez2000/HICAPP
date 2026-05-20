@@ -1,7 +1,7 @@
 // Database schema definitions for HiC app
 // All tables use CREATE TABLE IF NOT EXISTS for idempotent initialization
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const SQL_CREATE_MIGRATIONS = `
   CREATE TABLE IF NOT EXISTS _migrations (
@@ -20,8 +20,17 @@ export const SQL_CREATE_USER = `
     talla               REAL    NOT NULL DEFAULT 0,
     expediente          TEXT    NOT NULL DEFAULT '',
     onboarding_complete INTEGER NOT NULL DEFAULT 0,
-    created_at          TEXT    NOT NULL DEFAULT ''
+    created_at          TEXT    NOT NULL DEFAULT '',
+    fecha_nacimiento    TEXT    NOT NULL DEFAULT ''
   );
+`;
+
+/**
+ * Migration v2: adds fecha_nacimiento column to existing installs.
+ * Skipped on new installs (column already present in SQL_CREATE_USER).
+ */
+export const SQL_MIGRATION_V2 = `
+  ALTER TABLE user ADD COLUMN fecha_nacimiento TEXT NOT NULL DEFAULT '';
 `;
 
 export const SQL_CREATE_GOALS = `

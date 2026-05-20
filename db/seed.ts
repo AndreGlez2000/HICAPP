@@ -36,7 +36,7 @@ export async function seedDemoData(): Promise<void> {
   await insertDemoData(db);
 }
 
-type DBLike = { runAsync: (sql: string, params?: any[]) => Promise<any> };
+type DBLike = { runAsync: (sql: string, params: any[]) => Promise<any> };
 type LogEntry = { day: number; categoria: 'alimentacion' | 'actividad' | 'sueno' };
 
 // Meal options for photo simulation
@@ -77,9 +77,9 @@ async function insertDemoData(db: DBLike): Promise<void> {
 
   // Insert demo user
   await db.runAsync(
-    `INSERT INTO user (id, nombre, nickname, edad, peso, talla, expediente, onboarding_complete, created_at)
-     VALUES (1, ?, ?, ?, ?, ?, ?, 1, ?)`,
-    ['Carlos Ramírez', 'Carlitos', 10, 38.0, 1.42, 'HC-2026-001', now.toISOString()]
+    `INSERT INTO user (id, nombre, nickname, edad, peso, talla, expediente, onboarding_complete, created_at, fecha_nacimiento)
+     VALUES (1, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+    ['Carlos Ramírez', 'Carlitos', 10, 38.0, 1.42, 'HC-2026-001', now.toISOString(), '2016-01-01']
   );
 
   // Insert 3 goals for current month

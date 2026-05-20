@@ -10,6 +10,7 @@ export interface UserRow {
   expediente: string;
   onboarding_complete: number;
   created_at: string;
+  fecha_nacimiento: string;
 }
 
 export async function getUser(): Promise<UserRow | null> {

@@ -1,5 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-import { ALL_SCHEMAS, SCHEMA_VERSION } from './schema';
+import { ALL_SCHEMAS, SQL_MIGRATION_V2 } from './schema';
 
 let db: SQLite.SQLiteDatabase | null = null;
 
@@ -9,6 +9,14 @@ export function getDB(): SQLite.SQLiteDatabase {
   }
   return db;
 }
+
+/**
+ * Ordered migration map: version number → DDL to execute.
+ * Each entry runs exactly once when upgrading from a prior version.
+ */
+const MIGRATIONS: Record<number, string> = {
+  2: SQL_MIGRATION_V2,
+};
 
 /**
  * Opens the SQLite database and runs schema migrations.
@@ -31,17 +39,35 @@ export async function initDB(): Promise<void> {
     await db.execAsync(sql);
   }
 
-  // Check if this migration version was already applied
-  const existing = await db.getFirstAsync<{ version: number }>(
-    'SELECT version FROM _migrations WHERE version = ?',
-    [SCHEMA_VERSION]
+  // Sequential migration runner:
+  // 1. Find the highest applied version (0 if _migrations is empty)
+  const maxRow = await db.getFirstAsync<{ max_version: number | null }>(
+    'SELECT MAX(version) AS max_version FROM _migrations'
   );
+  const currentVersion = maxRow?.max_version ?? 0;
 
-  if (!existing) {
-    // Insert migration version record
+  const migrationVersions = Object.keys(MIGRATIONS)
+    .map(Number)
+    .sort((a, b) => a - b);
+
+  // Fresh install: mark latest version without executing ALTER TABLE
+  if (currentVersion === 0 && migrationVersions.length > 0) {
+    const latest = migrationVersions[migrationVersions.length - 1];
     await db.runAsync(
       'INSERT INTO _migrations (version, applied_at) VALUES (?, ?)',
-      [SCHEMA_VERSION, new Date().toISOString()]
+      [latest, new Date().toISOString()]
+    );
+    return;
+  }
+
+  // 2. Execute each pending migration in order
+  const pendingVersions = migrationVersions.filter((v) => v > currentVersion);
+
+  for (const version of pendingVersions) {
+    await db.execAsync(MIGRATIONS[version]);
+    await db.runAsync(
+      'INSERT INTO _migrations (version, applied_at) VALUES (?, ?)',
+      [version, new Date().toISOString()]
     );
   }
 }

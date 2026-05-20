@@ -5,11 +5,13 @@ import { useCameraPermissions } from 'expo-camera';
 import { useHicStore, Categoria } from '../../store';
 import { Button } from '../../components/primitives/Button';
 import { Input } from '../../components/primitives/Input';
+import { DatePickerField } from '../../components/primitives/DatePickerField';
 import { Stepper } from '../../components/primitives/Stepper';
 import { ScreenHeader } from '../../components/chrome/ScreenHeader';
 import { CATEGORY_LABEL, CATEGORY_TINT, CATEGORY_FG, CATEGORY_ICON } from '../../constants/design';
 import { Icon } from '../../components/primitives/Icon';
 import { requestNotificationPermission } from '../../services/notifications';
+import { calculateAge } from '../../utils/age';
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
 
@@ -21,7 +23,8 @@ export default function OnboardingScreen() {
   // Form Data
   const [nombre, setNombre] = useState('');
   const [nickname, setNickname] = useState('');
-  const [edad, setEdad] = useState('');
+  const [dob, setDob] = useState('');
+  const maxDob = new Date();
   const [peso, setPeso] = useState('');
   const [talla, setTalla] = useState('');
   const [expediente, setExpediente] = useState('');
@@ -49,8 +52,8 @@ export default function OnboardingScreen() {
     if (step === 4 && !nombre.trim()) return setError('Por favor, ingresa tu nombre');
     if (step === 5 && !nickname.trim()) return setError('Por favor, ingresa un apodo');
     if (step === 6) {
-      if (!edad.trim() || !peso.trim() || !talla.trim()) return setError('Por favor, completa todos los campos');
-      if (isNaN(Number(edad)) || isNaN(Number(peso)) || isNaN(Number(talla))) return setError('Ingresa valores numéricos válidos');
+      if (!dob.trim() || !peso.trim() || !talla.trim()) return setError('Por favor, completa todos los campos');
+      if (isNaN(Number(peso)) || isNaN(Number(talla))) return setError('Ingresa valores numéricos válidos');
     }
 
     if (step === 8 && !alimentacionTitulo.trim()) return setError('Ingresa una descripción para la meta');
@@ -71,14 +74,16 @@ export default function OnboardingScreen() {
     setStep(11);
     try {
       // 1. User
+      const edad = calculateAge(dob);
       await setUserStore({
         nombre: nombre.trim(),
         nickname: nickname.trim(),
-        edad: parseInt(edad, 10),
+        edad,
         peso: parseFloat(peso),
         talla: parseFloat(talla),
         expediente: expediente.trim(),
         onboarding_complete: 1,
+        fecha_nacimiento: dob,
       });
 
       // 2. Goals — limpia todo dato previo, luego inserta las 3 nuevas
@@ -311,12 +316,11 @@ export default function OnboardingScreen() {
         return (
           <View className="flex-1 justify-center gap-4">
             <Text className="font-fredoka text-primary text-3xl mb-2">Tus datos</Text>
-            <Input
-              label="Edad"
-              value={edad}
-              onChangeText={(t) => { setEdad(t); setError(''); }}
-              placeholder="Ej. 10"
-              keyboardType="numeric"
+            <DatePickerField
+              label="Fecha de nacimiento"
+              value={dob}
+              onChange={(iso) => { setDob(iso); setError(''); }}
+              maxDate={maxDob}
             />
             <Input
               label="Peso (kg)"
