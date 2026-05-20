@@ -1,10 +1,12 @@
-import { AdherenceData } from '../app/reporte-mensual/index';
+import type { AdherenceData, GoalsByMonthRow, PhotosSummary } from './report-range';
 import { CATEGORY_LABEL, CATEGORY_FG } from '../constants/design';
 
 export function buildHTMLReport(
   adherence: AdherenceData[],
   streak: number,
-  monthLabel: string
+  rangeLabel: string,
+  goalsByMonth: GoalsByMonthRow[],
+  photosSummary: PhotosSummary
 ): string {
   const brandInk = '#522c45';
   const brandPrimary = '#e87a3f';
@@ -28,6 +30,36 @@ export function buildHTMLReport(
       </div>
     `;
   }).join('');
+
+  const goalsSection = goalsByMonth.length
+    ? `
+      <div class="card">
+        <h3 class="section-title">Metas por mes</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+          <thead>
+            <tr style="text-align: left; color: #64748B;">
+              <th style="padding-bottom: 8px;">Mes</th>
+              <th style="padding-bottom: 8px;">Categoría</th>
+              <th style="padding-bottom: 8px;">Meta</th>
+              <th style="padding-bottom: 8px;">Logrado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${goalsByMonth
+              .map((row) => `
+                <tr>
+                  <td style="padding: 6px 0;">${row.month}</td>
+                  <td style="padding: 6px 0;">${CATEGORY_LABEL[row.categoria] || row.categoria}</td>
+                  <td style="padding: 6px 0;">${row.targetDays} días</td>
+                  <td style="padding: 6px 0;">${row.achievedDays} días</td>
+                </tr>
+              `)
+              .join('')}
+          </tbody>
+        </table>
+      </div>
+    `
+    : '';
 
   return `
     <!DOCTYPE html>
@@ -84,12 +116,18 @@ export function buildHTMLReport(
           color: #64748B;
           margin: 8px 0 0 0;
         }
+        .summary-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 14px;
+          color: #64748B;
+        }
       </style>
     </head>
     <body>
       <div class="header">
         <h1 class="title">Reporte de Progreso</h1>
-        <h2 class="subtitle">${monthLabel}</h2>
+        <h2 class="subtitle">${rangeLabel}</h2>
       </div>
 
       <div class="card">
@@ -98,10 +136,20 @@ export function buildHTMLReport(
       </div>
 
       <div class="card streak-container">
-        <h3 class="section-title" style="margin-bottom: 16px;">Racha del mes</h3>
+        <h3 class="section-title" style="margin-bottom: 16px;">Racha del período</h3>
         <p class="streak-number">${streak}</p>
         <p class="streak-label">${streak === 1 ? 'día seguido' : 'días seguidos'}</p>
       </div>
+
+      <div class="card">
+        <h3 class="section-title">Resumen de fotos</h3>
+        <div class="summary-row">
+          <span>Total de fotos en el período</span>
+          <strong>${photosSummary.total}</strong>
+        </div>
+      </div>
+
+      ${goalsSection}
     </body>
     </html>
   `;
