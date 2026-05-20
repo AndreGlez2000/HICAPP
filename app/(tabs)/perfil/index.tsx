@@ -32,29 +32,6 @@ export default function PerfilScreen() {
 
   const initial = (user.nombre || user.nickname || '?')[0].toUpperCase();
 
-  const handleReset = () => {
-    Alert.alert(
-      'Resetear app',
-      '¿Seguro? Se borrarán todos los datos y regresarás al inicio.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Resetear',
-          style: 'destructive',
-          onPress: async () => {
-            const db = getDB();
-            await db.runAsync('DELETE FROM mi_dia_log');
-            await db.runAsync('DELETE FROM goals');
-            await db.runAsync('DELETE FROM photos');
-            await db.runAsync('DELETE FROM user');
-            useHicStore.setState({ user: null, goals: [], miDiaLog: [], photos: [] });
-            router.replace('/onboarding');
-          },
-        },
-      ]
-    );
-  };
-
   return (
     <View className="flex-1 bg-bg">
       <ScreenHeader
@@ -147,16 +124,6 @@ export default function PerfilScreen() {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={handleReset}
-          activeOpacity={0.8}
-          className="mt-3"
-        >
-          <View className="rounded-pill h-12 bg-transparent border border-red-200 items-center justify-center flex-row gap-2">
-            <Icon name="trash-2" size={16} color="#e57373" />
-            <Text className="font-nunito text-sm text-red-400">Resetear app</Text>
-          </View>
-        </TouchableOpacity>
       </ScrollView>
     </View>
   );

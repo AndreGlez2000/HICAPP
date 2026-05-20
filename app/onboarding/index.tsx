@@ -6,12 +6,21 @@ import { useHicStore, Categoria } from '../../store';
 import { Button } from '../../components/primitives/Button';
 import { Input } from '../../components/primitives/Input';
 import { DatePickerField } from '../../components/primitives/DatePickerField';
+import { WheelPicker } from '../../components/primitives/WheelPicker';
 import { Stepper } from '../../components/primitives/Stepper';
 import { ScreenHeader } from '../../components/chrome/ScreenHeader';
 import { CATEGORY_LABEL, CATEGORY_TINT, CATEGORY_FG, CATEGORY_ICON } from '../../constants/design';
 import { Icon } from '../../components/primitives/Icon';
 import { requestNotificationPermission } from '../../services/notifications';
 import { calculateAge } from '../../utils/age';
+
+const PESO_MIN = 20;
+const PESO_ITEMS = Array.from({ length: 181 }, (_, i) => String(i + PESO_MIN)); // '20'..'200'
+const PESO_DEFAULT = 60; // kg
+
+const TALLA_MIN = 80;
+const TALLA_ITEMS = Array.from({ length: 141 }, (_, i) => String(i + TALLA_MIN)); // '80'..'220'
+const TALLA_DEFAULT = 150; // cm
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
 
@@ -25,8 +34,8 @@ export default function OnboardingScreen() {
   const [nickname, setNickname] = useState('');
   const [dob, setDob] = useState('');
   const maxDob = new Date();
-  const [peso, setPeso] = useState('');
-  const [talla, setTalla] = useState('');
+  const [peso, setPeso] = useState<number>(PESO_DEFAULT);
+  const [talla, setTalla] = useState<number>(TALLA_DEFAULT);
   const [expediente, setExpediente] = useState('');
 
   // Goals
@@ -52,8 +61,7 @@ export default function OnboardingScreen() {
     if (step === 4 && !nombre.trim()) return setError('Por favor, ingresa tu nombre');
     if (step === 5 && !nickname.trim()) return setError('Por favor, ingresa un apodo');
     if (step === 6) {
-      if (!dob.trim() || !peso.trim() || !talla.trim()) return setError('Por favor, completa todos los campos');
-      if (isNaN(Number(peso)) || isNaN(Number(talla))) return setError('Ingresa valores numéricos válidos');
+      if (!dob.trim()) return setError('Por favor, ingresa tu fecha de nacimiento');
     }
 
     if (step === 8 && !alimentacionTitulo.trim()) return setError('Ingresa una descripción para la meta');
@@ -79,8 +87,8 @@ export default function OnboardingScreen() {
         nombre: nombre.trim(),
         nickname: nickname.trim(),
         edad,
-        peso: parseFloat(peso),
-        talla: parseFloat(talla),
+        peso,
+        talla,
         expediente: expediente.trim(),
         onboarding_complete: 1,
         fecha_nacimiento: dob,
@@ -314,7 +322,7 @@ export default function OnboardingScreen() {
         );
       case 6:
         return (
-          <View className="flex-1 justify-center gap-4">
+          <View className="flex-1 justify-center gap-6">
             <Text className="font-fredoka text-primary text-3xl mb-2">Tus datos</Text>
             <DatePickerField
               label="Fecha de nacimiento"
@@ -322,19 +330,19 @@ export default function OnboardingScreen() {
               onChange={(iso) => { setDob(iso); setError(''); }}
               maxDate={maxDob}
             />
-            <Input
-              label="Peso (kg)"
-              value={peso}
-              onChangeText={(t) => { setPeso(t); setError(''); }}
-              placeholder="Ej. 38.5"
-              keyboardType="numeric"
+            <WheelPicker
+              label="Peso"
+              items={PESO_ITEMS}
+              selectedIndex={peso - PESO_MIN}
+              onChange={(i) => setPeso(i + PESO_MIN)}
+              unit="kg"
             />
-            <Input
-              label="Estatura (cm)"
-              value={talla}
-              onChangeText={(t) => { setTalla(t); setError(''); }}
-              placeholder="Ej. 142"
-              keyboardType="numeric"
+            <WheelPicker
+              label="Estatura"
+              items={TALLA_ITEMS}
+              selectedIndex={talla - TALLA_MIN}
+              onChange={(i) => setTalla(i + TALLA_MIN)}
+              unit="cm"
             />
             {error ? <Text className="font-nunito text-xs text-red-600 mt-1">{error}</Text> : null}
           </View>
