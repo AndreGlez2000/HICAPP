@@ -1,157 +1,34 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { router } from 'expo-router';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { buildHTMLReport } from '../../utils/pdf-template';
-import { useHicStore, type MiDiaEntry, type Photo } from '../../store';
+import { DatePickerField } from '../../components/primitives/DatePickerField';
+import { useHicStore, type Photo } from '../../store';
 import { ScreenHeader } from '../../components/chrome/ScreenHeader';
 import { Card } from '../../components/primitives/Card';
 import { ProgressBar } from '../../components/primitives/ProgressBar';
 import {
   CATEGORY_FG,
   CATEGORY_LABEL,
-  type Categoria,
 } from '../../constants/design';
+import {
+  type AdherenceData,
+  type GoalsByMonthRow,
+  type PhotosSummary,
+  type ReportRange,
+  addMonths,
+  buildGoalsByMonth,
+  buildRangeLabel,
+  buildRangeStats,
+  formatMonthLabel,
+  getLocalMonthKey,
+  getMonthsInRange,
+  hasLogsInRange,
+  isRangeValid,
+} from '../../utils/report-range';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface AdherenceData {
-  categoria: Categoria;
-  completed: number;
-  total: number;
-  pct: number;
-}
-
-// ─── Pure Functions ────────────────────────────────────────────────────────────
-
-/**
- * Returns available months (YYYY-MM) sorted descending.
- * Always includes the current calendar month even if no logs exist for it.
- */
-function getAvailableMonths(logs: MiDiaEntry[]): string[] {
-  const currentMonth = new Date().toISOString().substring(0, 7);
-  const monthsFromLogs = new Set(logs.map((l) => l.fecha.substring(0, 7)));
-  monthsFromLogs.add(currentMonth);
-  return Array.from(monthsFromLogs).sort((a, b) => b.localeCompare(a));
-}
-
-/**
- * Returns adherence data (completed days, total days, %) for each category
- * within the given month. For the current month, caps total at today's date.
- */
-function getAdherence(logs: MiDiaEntry[], month: string): AdherenceData[] {
-  const today = new Date();
-  const currentMonth = today.toISOString().substring(0, 7);
-  const [year, monthNum] = month.split('-').map(Number);
-
-  let totalDays: number;
-  if (month === currentMonth) {
-    totalDays = today.getDate();
-  } else {
-    // Last day of month: new Date(year, monthNum, 0) gives last day of monthNum-1... 
-    // Actually new Date(year, monthNum, 0) gives last day of month monthNum (1-indexed).
-    totalDays = new Date(year, monthNum, 0).getDate();
-  }
-
-  const categorias: Categoria[] = ['alimentacion', 'actividad', 'sueno'];
-  return categorias.map((categoria) => {
-    const logsForCat = logs.filter(
-      (l) =>
-        l.fecha.substring(0, 7) === month &&
-        l.categoria === categoria &&
-        l.completado === 1
-    );
-    const completed = logsForCat.length;
-    const pct = totalDays > 0 ? Math.round((completed / totalDays) * 100) : 0;
-    return { categoria, completed, total: totalDays, pct };
-  });
-}
-
-/**
- * Returns the maximum consecutive-days streak in the given month where
- * ALL 3 categories have completado=1 on that day. For the current month,
- * only counts days up to and including today.
- */
-function getMaxStreak(logs: MiDiaEntry[], month: string): number {
-  const today = new Date();
-  const currentMonth = today.toISOString().substring(0, 7);
-  const [year, monthNum] = month.split('-').map(Number);
-
-  const lastDay =
-    month === currentMonth
-      ? today.getDate()
-      : new Date(year, monthNum, 0).getDate();
-
-  // Build a set of "complete days" — days where all 3 categories are done
-  const completeDays = new Set<string>();
-  for (let day = 1; day <= lastDay; day++) {
-    const dateStr = `${month}-${String(day).padStart(2, '0')}`;
-    const dayLogs = logs.filter((l) => l.fecha === dateStr && l.completado === 1);
-    const categorias = new Set(dayLogs.map((l) => l.categoria));
-    if (
-      categorias.has('alimentacion') &&
-      categorias.has('actividad') &&
-      categorias.has('sueno')
-    ) {
-      completeDays.add(dateStr);
-    }
-  }
-
-  let maxStreak = 0;
-  let currentStreak = 0;
-  for (let day = 1; day <= lastDay; day++) {
-    const dateStr = `${month}-${String(day).padStart(2, '0')}`;
-    if (completeDays.has(dateStr)) {
-      currentStreak++;
-      if (currentStreak > maxStreak) maxStreak = currentStreak;
-    } else {
-      currentStreak = 0;
-    }
-  }
-
-  return maxStreak;
-}
-
-/**
- * Filters photos to those taken in the given month (YYYY-MM), sorted newest first.
- */
-function getMonthPhotos(photos: Photo[], month: string): Photo[] {
-  return photos
-    .filter((p) => p.created_at.substring(0, 7) === month)
-    .sort((a, b) => b.created_at.localeCompare(a.created_at));
-}
-
-/**
- * Builds a plain-text share message summarizing the report.
- */
-function buildShareMessage(
-  adherence: AdherenceData[],
-  streak: number,
-  month: string
-): string {
-  const monthLabel = formatMonthLabel(month);
-  const lines: string[] = [`Reporte HiC — ${monthLabel}`, ''];
-  for (const item of adherence) {
-    const label = CATEGORY_LABEL[item.categoria];
-    lines.push(`${label}: ${item.completed}/${item.total} días (${item.pct}%)`);
-  }
-  lines.push('');
-  lines.push(`Racha del mes: ${streak} ${streak === 1 ? 'día seguido' : 'días seguidos'}`);
-  return lines.join('\n');
-}
-
-// ─── Utilities ─────────────────────────────────────────────────────────────────
-
-const MONTH_NAMES_ES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
-];
-
-function formatMonthLabel(month: string): string {
-  const [year, monthNum] = month.split('-').map(Number);
-  return `${MONTH_NAMES_ES[monthNum - 1]} ${year}`;
-}
 
 const DAY_MONTH_ES = [
   'ene', 'feb', 'mar', 'abr', 'may', 'jun',
@@ -214,48 +91,138 @@ function PhotoMetaRow({ photo, last = false }: { photo: Photo; last?: boolean })
   );
 }
 
-function PeriodSelector({
-  months,
-  selectedMonth,
-  onSelect,
+function RangeChip({
+  label,
+  active,
+  onPress,
 }: {
-  months: string[];
-  selectedMonth: string;
-  onSelect: (month: string) => void;
-}): React.JSX.Element | null {
-  if (months.length <= 1) return null;
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}): React.JSX.Element {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.75}
+      className={`px-4 h-10 rounded-pill border items-center justify-center ${
+        active ? 'bg-primary border-primary' : 'bg-surface border-border'
+      }`}
+    >
+      <Text className={`font-nunito-bold text-sm ${active ? 'text-white' : 'text-muted'}`}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+function RangeSelector({
+  range,
+  onChange,
+  invalidMessage,
+  onInvalid,
+}: {
+  range: ReportRange;
+  onChange: (range: ReportRange) => void;
+  invalidMessage?: string;
+  onInvalid: (message: string | null) => void;
+}): React.JSX.Element {
+  const currentMonth = getLocalMonthKey(new Date());
+  const quickRanges = [
+    { label: '1 mes', months: 1 },
+    { label: '3 meses', months: 3 },
+    { label: '6 meses', months: 6 },
+    { label: '12 meses', months: 12 },
+  ];
+
+  const activeQuick = quickRanges.find((item) => {
+    const startMonth = addMonths(currentMonth, -(item.months - 1));
+    return range.startMonth === startMonth && range.endMonth === currentMonth;
+  });
+
+  const handleQuickSelect = (months: number) => {
+    const startMonth = addMonths(currentMonth, -(months - 1));
+    const nextRange = {
+      startMonth,
+      endMonth: currentMonth,
+      label: buildRangeLabel(startMonth, currentMonth),
+    };
+    onInvalid(null);
+    onChange(nextRange);
+  };
+
+  const handleStartChange = (isoDate: string) => {
+    const startMonth = isoDate.substring(0, 7);
+    const nextRange = {
+      startMonth,
+      endMonth: range.endMonth,
+      label: buildRangeLabel(startMonth, range.endMonth),
+    };
+    if (!isRangeValid(startMonth, range.endMonth)) {
+      onInvalid('El mes inicial no puede ser después del mes final.');
+      return;
+    }
+    onInvalid(null);
+    onChange(nextRange);
+  };
+
+  const handleEndChange = (isoDate: string) => {
+    const endMonth = isoDate.substring(0, 7);
+    const nextRange = {
+      startMonth: range.startMonth,
+      endMonth,
+      label: buildRangeLabel(range.startMonth, endMonth),
+    };
+    if (!isRangeValid(range.startMonth, endMonth)) {
+      onInvalid('El mes final no puede ser antes del mes inicial.');
+      return;
+    }
+    onInvalid(null);
+    onChange(nextRange);
+  };
+
+  const endDateMax = new Date();
+  const minDate = new Date(2020, 0, 1);
+  const startDateValue = `${range.startMonth}-01`;
+  const endDateValue = `${range.endMonth}-01`;
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ paddingHorizontal: 24, gap: 8, paddingBottom: 8 }}
-      className="mb-4"
-    >
-      {months.map((month) => {
-        const isSelected = month === selectedMonth;
-        return (
-          <TouchableOpacity
-            key={month}
-            onPress={() => onSelect(month)}
-            activeOpacity={0.75}
-            className={`px-4 h-10 rounded-pill border items-center justify-center ${
-              isSelected
-                ? 'bg-primary border-primary'
-                : 'bg-surface border-border'
-            }`}
-          >
-            <Text
-              className={`font-nunito-bold text-sm ${
-                isSelected ? 'text-white' : 'text-muted'
-              }`}
-            >
-              {formatMonthLabel(month)}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
+    <View className="mb-4">
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 24, gap: 8, paddingBottom: 8 }}
+        className="mb-3"
+      >
+        {quickRanges.map((item) => (
+          <RangeChip
+            key={item.label}
+            label={`Últimos ${item.months}`}
+            active={activeQuick?.months === item.months}
+            onPress={() => handleQuickSelect(item.months)}
+          />
+        ))}
+      </ScrollView>
+
+      <View className="px-6 gap-3">
+        <DatePickerField
+          label="Mes inicial"
+          value={startDateValue}
+          onChange={handleStartChange}
+          maxDate={endDateMax}
+          minDate={minDate}
+        />
+        <DatePickerField
+          label="Mes final"
+          value={endDateValue}
+          onChange={handleEndChange}
+          maxDate={endDateMax}
+          minDate={minDate}
+        />
+        {invalidMessage ? (
+          <Text className="font-nunito text-xs text-red-600">{invalidMessage}</Text>
+        ) : null}
+      </View>
+    </View>
   );
 }
 
@@ -273,7 +240,7 @@ function AdherenceSection({ adherence }: { adherence: AdherenceData[] }): React.
 function StreakCard({ streak }: { streak: number }): React.JSX.Element {
   return (
     <Card padded className="mb-4 items-center">
-      <SectionTitle title="Racha del mes" />
+      <SectionTitle title="Racha del período" />
       <Text
         className="font-fredoka"
         style={{ fontSize: 72, color: '#e87a3f', lineHeight: 80 }}
@@ -330,19 +297,22 @@ function EmptyState(): React.JSX.Element {
 function ShareButton({
   adherence,
   streak,
-  selectedMonth,
+  rangeLabel,
+  goalsByMonth,
+  photosSummary,
 }: {
   adherence: AdherenceData[];
   streak: number;
-  selectedMonth: string;
+  rangeLabel: string;
+  goalsByMonth: GoalsByMonthRow[];
+  photosSummary: PhotosSummary;
 }): React.JSX.Element {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleShare = async (): Promise<void> => {
     try {
       setIsGenerating(true);
-      const monthLabel = formatMonthLabel(selectedMonth);
-      const html = buildHTMLReport(adherence, streak, monthLabel);
+      const html = buildHTMLReport(adherence, streak, rangeLabel, goalsByMonth, photosSummary);
       
       const { uri } = await Print.printToFileAsync({ html });
       
@@ -384,17 +354,28 @@ function ShareButton({
 export default function MonthlyReportScreen(): React.JSX.Element {
   const miDiaLog = useHicStore((s) => s.miDiaLog);
   const photos = useHicStore((s) => s.photos);
+  const goals = useHicStore((s) => s.goals);
 
-  const currentMonth = new Date().toISOString().substring(0, 7);
-  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
+  const currentMonth = getLocalMonthKey(new Date());
+  const [range, setRange] = useState<ReportRange>(() => ({
+    startMonth: currentMonth,
+    endMonth: currentMonth,
+    label: formatMonthLabel(currentMonth),
+  }));
+  const [rangeError, setRangeError] = useState<string | null>(null);
 
-  const months = getAvailableMonths(miDiaLog);
-  const adherence = getAdherence(miDiaLog, selectedMonth);
-  const streak = getMaxStreak(miDiaLog, selectedMonth);
-  const monthPhotos = getMonthPhotos(photos, selectedMonth);
+  const { adherence, streak, photosInRange } = useMemo(() => {
+    return buildRangeStats(miDiaLog, photos, range);
+  }, [miDiaLog, photos, range]);
 
-  const logsForMonth = miDiaLog.filter((l) => l.fecha.substring(0, 7) === selectedMonth);
-  const hasData = logsForMonth.length > 0;
+  const goalsByMonth = useMemo(() => {
+    return buildGoalsByMonth(goals, miDiaLog, range);
+  }, [goals, miDiaLog, range]);
+
+  const hasData = useMemo(() => hasLogsInRange(miDiaLog, range), [miDiaLog, range]);
+  const photosSummary = useMemo(() => ({ total: photosInRange.length }), [photosInRange.length]);
+  const monthsInRange = useMemo(() => getMonthsInRange(range.startMonth, range.endMonth), [range]);
+  const invalidRange = !isRangeValid(range.startMonth, range.endMonth);
 
   return (
     <View className="flex-1 bg-bg">
@@ -404,27 +385,53 @@ export default function MonthlyReportScreen(): React.JSX.Element {
         onBack={() => router.back()}
       />
 
-      <PeriodSelector
-        months={months}
-        selectedMonth={selectedMonth}
-        onSelect={setSelectedMonth}
+      <RangeSelector
+        range={range}
+        onChange={setRange}
+        invalidMessage={rangeError}
+        onInvalid={setRangeError}
       />
 
       <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 8 }}>
-        {hasData ? (
+        {hasData && !invalidRange ? (
           <>
             <AdherenceSection adherence={adherence} />
             <StreakCard streak={streak} />
-            <PhotoMetaSection photos={monthPhotos} />
+            <PhotoMetaSection photos={photosInRange} />
+            {goalsByMonth.length > 0 ? (
+              <Card padded className="mb-4">
+                <SectionTitle title="Metas por mes" />
+                {goalsByMonth.map((row) => (
+                  <View key={`${row.month}-${row.categoria}`} className="mb-3">
+                    <Text className="font-nunito-bold text-sm text-ink">
+                      {formatMonthLabel(row.month)} · {CATEGORY_LABEL[row.categoria]}
+                    </Text>
+                    <Text className="font-nunito text-xs text-muted">
+                      {row.titulo}
+                    </Text>
+                    <Text className="font-nunito text-xs text-muted mt-1">
+                      Meta: {row.targetDays} días · Logrados: {row.achievedDays}
+                    </Text>
+                  </View>
+                ))}
+              </Card>
+            ) : null}
             <ShareButton
               adherence={adherence}
               streak={streak}
-              selectedMonth={selectedMonth}
+              rangeLabel={range.label}
+              goalsByMonth={goalsByMonth}
+              photosSummary={photosSummary}
             />
           </>
         ) : (
           <EmptyState />
         )}
+        {!hasData && monthsInRange.length > 1 && !invalidRange ? (
+          <Text className="font-nunito text-xs text-muted text-center mb-6">
+            No hay registros en este rango todavía.
+          </Text>
+        ) : null}
       </ScrollView>
     </View>
   );
