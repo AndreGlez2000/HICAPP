@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } fr
 import { router } from 'expo-router';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { buildHTMLReport } from './_pdf-template';
+import { buildHTMLReport } from '../../utils/pdf-template';
 import { useHicStore, type MiDiaEntry, type Photo } from '../../store';
 import { ScreenHeader } from '../../components/chrome/ScreenHeader';
 import { Card } from '../../components/primitives/Card';

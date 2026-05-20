@@ -1,5 +1,5 @@
-import { AdherenceData } from './index';
-import { CATEGORY_LABEL, CATEGORY_FG } from '../../constants/design';
+import { AdherenceData } from '../app/reporte-mensual/index';
+import { CATEGORY_LABEL, CATEGORY_FG } from '../constants/design';
 
 export function buildHTMLReport(
   adherence: AdherenceData[],
