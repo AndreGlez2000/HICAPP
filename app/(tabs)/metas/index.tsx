@@ -9,11 +9,14 @@ import { router } from 'expo-router';
 import { Alert } from 'react-native';
 
 export default function DashboardScreen() {
-  const goals = useHicStore((s) => s.goals);
+  const allGoals = useHicStore((s) => s.goals);
   const user = useHicStore((s) => s.user);
   const resetApp = useHicStore((s) => s.resetApp);
   const miDiaLog = useHicStore((s) => s.miDiaLog);
   const currentMonth = new Date().toISOString().substring(0, 7);
+
+  // Only show goals for the current month — past months are historical
+  const goals = allGoals.filter((g) => g.mes === currentMonth);
 
   const handleReset = () => {
     Alert.alert(
