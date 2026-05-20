@@ -106,7 +106,7 @@ export default function FotosScreen() {
                 className="rounded-2xl overflow-hidden bg-[#fdf0e8]"
                 onPress={() => router.push(`/modals/photo-detail?id=${photo.id}`)}
               >
-                {photo.uri ? (
+                {photo.uri && !photo.uri.startsWith('demo://') ? (
                   <Image
                     source={{ uri: photo.uri }}
                     style={{ width: PHOTO_SIZE, height: PHOTO_SIZE }}
