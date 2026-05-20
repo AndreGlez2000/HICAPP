@@ -79,7 +79,7 @@ async function insertDemoData(db: DBLike): Promise<void> {
   await db.runAsync(
     `INSERT INTO user (id, nombre, nickname, edad, peso, talla, expediente, onboarding_complete, created_at, fecha_nacimiento)
      VALUES (1, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
-    ['Carlos Ramírez', 'Carlitos', 10, 38.0, 1.42, 'HC-2026-001', now.toISOString(), '2016-01-01']
+    ['Carlos Ramírez', 'Carlitos', 10, 38.0, 142, 'HC-2026-001', now.toISOString(), '2016-01-01']
   );
 
   // Insert 3 goals for current month
@@ -94,6 +94,38 @@ async function insertDemoData(db: DBLike): Promise<void> {
   await db.runAsync(
     `INSERT INTO goals (categoria, titulo, dias_target, count_mes, mes) VALUES (?, ?, ?, ?, ?)`,
     ['sueno', 'Apagar pantallas a las 9pm', 6, 0, currentMonth]
+  );
+
+  // Insert 3 goals for M-1 (1 month ago)
+  const m1Goals = monthAgo(1);
+  const m1Month = `${m1Goals.year}-${m1Goals.month}`;
+  await db.runAsync(
+    `INSERT INTO goals (categoria, titulo, dias_target, count_mes, mes) VALUES (?, ?, ?, ?, ?)`,
+    ['alimentacion', 'Comer fruta en el desayuno', 5, 18, m1Month]
+  );
+  await db.runAsync(
+    `INSERT INTO goals (categoria, titulo, dias_target, count_mes, mes) VALUES (?, ?, ?, ?, ?)`,
+    ['actividad', 'Salir a jugar 30 minutos', 3, 10, m1Month]
+  );
+  await db.runAsync(
+    `INSERT INTO goals (categoria, titulo, dias_target, count_mes, mes) VALUES (?, ?, ?, ?, ?)`,
+    ['sueno', 'Apagar pantallas a las 9pm', 6, 22, m1Month]
+  );
+
+  // Insert 3 goals for M-2 (2 months ago)
+  const m2Goals = monthAgo(2);
+  const m2Month = `${m2Goals.year}-${m2Goals.month}`;
+  await db.runAsync(
+    `INSERT INTO goals (categoria, titulo, dias_target, count_mes, mes) VALUES (?, ?, ?, ?, ?)`,
+    ['alimentacion', 'Comer fruta en el desayuno', 5, 12, m2Month]
+  );
+  await db.runAsync(
+    `INSERT INTO goals (categoria, titulo, dias_target, count_mes, mes) VALUES (?, ?, ?, ?, ?)`,
+    ['actividad', 'Salir a jugar 30 minutos', 3, 8, m2Month]
+  );
+  await db.runAsync(
+    `INSERT INTO goals (categoria, titulo, dias_target, count_mes, mes) VALUES (?, ?, ?, ?, ?)`,
+    ['sueno', 'Apagar pantallas a las 9pm', 6, 16, m2Month]
   );
 
   // ── Current month logs (days 1..today) ──────────────────────────────────────
@@ -127,6 +159,16 @@ async function insertDemoData(db: DBLike): Promise<void> {
       `INSERT OR IGNORE INTO mi_dia_log (fecha, categoria, completado) VALUES (?, ?, 1)`,
       [dateStr(m1.year, m1.month, d), 'sueno']
     );
+  }
+
+  // ── M-1 guaranteed streak: days 5–10 all 3 categories complete ─────────────
+  for (let d = 5; d <= 10; d++) {
+    for (const cat of ['alimentacion', 'actividad', 'sueno'] as const) {
+      await db.runAsync(
+        `INSERT OR IGNORE INTO mi_dia_log (fecha, categoria, completado) VALUES (?, ?, 1)`,
+        [dateStr(m1.year, m1.month, d), cat]
+      );
+    }
   }
 
   // ── 2 months ago: lower adherence (~50%) ────────────────────────────────────

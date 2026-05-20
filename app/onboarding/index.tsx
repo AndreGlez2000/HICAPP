@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Alert, KeyboardAvoidingView, Platform, Touchabl
 import { router } from 'expo-router';
 import { useCameraPermissions } from 'expo-camera';
 import { useHicStore, Categoria } from '../../store';
+import { loadDemoDataFresh } from '../../db/seed';
 import { Button } from '../../components/primitives/Button';
 import { Input } from '../../components/primitives/Input';
 import { DatePickerField } from '../../components/primitives/DatePickerField';
@@ -126,6 +127,19 @@ export default function OnboardingScreen() {
     nextStep(4);
   };
 
+  const handleDemoMode = async () => {
+    setStep(11); // show loading spinner
+    try {
+      await loadDemoDataFresh();
+      await useHicStore.getState().loadFromDB();
+      router.replace('/(tabs)/metas');
+    } catch (e) {
+      console.error('[DemoMode] seed failed:', e);
+      Alert.alert('Error', 'No se pudo cargar la versión de prueba.');
+      setStep(0);
+    }
+  };
+
   const renderStep = () => {
     switch (step) {
       case 0:
@@ -159,6 +173,14 @@ export default function OnboardingScreen() {
 
             {/* Spacer flexible */}
             <View style={{ flex: 1 }} />
+
+            {__DEV__ && (
+              <TouchableOpacity onPress={handleDemoMode} className="items-center py-3">
+                <Text className="font-nunito text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  ⚗️ Versión de prueba
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         );
 
