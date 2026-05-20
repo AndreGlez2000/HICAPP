@@ -6,12 +6,28 @@ import { GoalCard } from '../../../components/screens/GoalCard';
 import { Card } from '../../../components/primitives/Card';
 import { Icon } from '../../../components/primitives/Icon';
 import { router } from 'expo-router';
+import { Alert } from 'react-native';
 
 export default function DashboardScreen() {
   const goals = useHicStore((s) => s.goals);
   const user = useHicStore((s) => s.user);
+  const resetApp = useHicStore((s) => s.resetApp);
   const miDiaLog = useHicStore((s) => s.miDiaLog);
   const currentMonth = new Date().toISOString().substring(0, 7);
+
+  const handleReset = () => {
+    Alert.alert(
+      'Resetear aplicación',
+      '¿Estás seguro de que quieres borrar todos los datos? Esto reiniciará el onboarding.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Borrar todo', style: 'destructive', onPress: async () => {
+          await resetApp();
+          router.replace('/onboarding');
+        } },
+      ]
+    );
+  };
   
   const needsRenewal = goals.length > 0 && goals[0].mes !== currentMonth;
 
@@ -95,6 +111,16 @@ export default function DashboardScreen() {
              <View className="h-full bg-[#e87a3f] rounded-full" style={{ width: `${Math.min((uniqueDays / 30) * 100, 100)}%` }} />
           </View>
         </Card>
+
+        {__DEV__ && (
+          <TouchableOpacity 
+            onPress={handleReset}
+            className="mt-8 p-4 bg-red-100 rounded-2xl flex-row items-center justify-center gap-2 border border-red-200"
+          >
+            <Icon name="trash-2" size={20} color="#ef4444" />
+            <Text className="font-nunito-bold text-red-500">Resetear App (Dev Only)</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   );

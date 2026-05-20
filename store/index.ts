@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { deleteDatabase, initDB } from '../db';
 import { getUser, upsertUser, type UserRow } from '../db/user';
 import { getGoals, upsertGoal, type GoalRow } from '../db/goals';
 import { getMiDiaLog, toggleMiDia as dbToggleMiDia, type MiDiaRow } from '../db/miDia';
@@ -32,6 +33,7 @@ interface HicStore {
   // User actions
   setUser: (data: Partial<Omit<User, 'id'>>) => Promise<void>;
   clearUser: () => void;
+  resetApp: () => Promise<void>;
 
   // Goals actions
   setGoals: (goals: Goal[]) => void;
@@ -77,6 +79,12 @@ export const useHicStore = create<HicStore>((set, get) => ({
     set({ user: updated });
   },
   clearUser: () => set({ user: null }),
+  resetApp: async () => {
+    await deleteDatabase();
+    set({ user: null, goals: [], miDiaLog: [], photos: [], isHydrated: false });
+    await initDB();
+    await get().loadFromDB();
+  },
 
   // Goals
   setGoals: (goals) => set({ goals }),
