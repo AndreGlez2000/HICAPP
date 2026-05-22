@@ -21,21 +21,22 @@ export async function getUser(): Promise<UserRow | null> {
 export async function upsertUser(data: Partial<Omit<UserRow, 'id'>>): Promise<void> {
   const db = getDB();
 
-  const existing = await db.getFirstAsync<{ id: number }>('SELECT id FROM user WHERE id = 1');
+  const keys = Object.keys(data);
+  if (keys.length === 0) return; // nothing to write
 
-  if (existing) {
-    const fields = Object.keys(data)
-      .map((k) => `${k} = ?`)
-      .join(', ');
-    const values = [...Object.values(data), 1];
-    await db.runAsync(`UPDATE user SET ${fields} WHERE id = ?`, values);
-  } else {
-    const fields = ['id', ...Object.keys(data)].join(', ');
-    const placeholders = ['?', ...Object.keys(data).map(() => '?')].join(', ');
-    const values = [1, ...Object.values(data)];
-    await db.runAsync(
-      `INSERT INTO user (${fields}) VALUES (${placeholders})`,
-      values
-    );
-  }
+  const values = Object.values(data);
+
+  // Build column lists for INSERT and the SET clause for the conflict branch.
+  // Using a single atomic INSERT … ON CONFLICT eliminates the SELECT→write
+  // race condition that occurred when two concurrent calls both missed the
+  // existing-row check and tried to INSERT simultaneously.
+  const insertCols = ['id', ...keys].join(', ');
+  const insertPlaceholders = ['?', ...keys.map(() => '?')].join(', ');
+  const updateSet = keys.map((k) => `${k} = excluded.${k}`).join(', ');
+
+  await db.runAsync(
+    `INSERT INTO user (${insertCols}) VALUES (${insertPlaceholders})
+     ON CONFLICT(id) DO UPDATE SET ${updateSet}`,
+    [1, ...values]
+  );
 }
