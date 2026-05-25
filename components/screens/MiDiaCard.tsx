@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useHicStore, Categoria } from '../../store';
 import { Icon } from '../primitives/Icon';
 import { CATEGORY_LABEL, CATEGORY_ICON, CATEGORY_FG } from '../../constants/design';
+import { getLocalDateKey } from '../../utils/date-keys';
 
 interface MiDiaCardProps {
   categoria: Categoria;
@@ -13,30 +14,28 @@ export function MiDiaCard({ categoria, titulo }: MiDiaCardProps) {
   const miDiaLog = useHicStore((s) => s.miDiaLog);
   const toggleMiDia = useHicStore((s) => s.toggleMiDia);
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const isDone = miDiaLog.some(
-    (l) => l.fecha === todayStr && l.categoria === categoria && l.completado === 1
-  );
+  const todayKey = getLocalDateKey(new Date());
+  const isDone = miDiaLog.some((l) => l.categoria === categoria && l.completado === 1 && l.fecha === todayKey);
 
   const color = CATEGORY_FG[categoria];
 
   return (
     <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={() => toggleMiDia(todayStr, categoria)}
-      style={styles.card}
+      activeOpacity={isDone ? 1 : 0.8}
+      onPress={isDone ? undefined : () => toggleMiDia(todayKey, categoria)}
+      style={[styles.card, isDone && styles.cardDone]}
     >
       {/* Ícono */}
-      <View style={styles.iconBox}>
-        <Icon name={CATEGORY_ICON[categoria]} size={22} color="#aaa" strokeWidth={1.5} />
+      <View style={[styles.iconBox, isDone && styles.iconBoxDone]}>
+        <Icon name={CATEGORY_ICON[categoria]} size={22} color={isDone ? '#ccc' : '#aaa'} strokeWidth={1.5} />
       </View>
 
       {/* Texto */}
       <View style={styles.textBlock}>
-        <Text style={[styles.catLabel, { color }]}>
+        <Text style={[styles.catLabel, { color: isDone ? '#ccc' : color }]}>
           {CATEGORY_LABEL[categoria].toUpperCase()}
         </Text>
-        <Text style={styles.titulo} numberOfLines={2}>{titulo}</Text>
+        <Text style={[styles.titulo, isDone && styles.tituloDone]} numberOfLines={2}>{titulo}</Text>
       </View>
 
       {/* Checkmark */}
@@ -99,5 +98,17 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#d8d8d8',
     backgroundColor: 'transparent',
+  },
+  cardDone: {
+    backgroundColor: '#fafafa',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  iconBoxDone: {
+    backgroundColor: '#f0f0f0',
+  },
+  tituloDone: {
+    color: '#bbb',
+    textDecorationLine: 'line-through',
   },
 });

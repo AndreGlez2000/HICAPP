@@ -1,7 +1,12 @@
 import { create } from 'zustand';
+import { deleteDatabase, initDB } from '../db';
 import { getUser, upsertUser, type UserRow } from '../db/user';
 import { getGoals, upsertGoal, type GoalRow } from '../db/goals';
-import { getMiDiaLog, toggleMiDia as dbToggleMiDia, type MiDiaRow } from '../db/miDia';
+import {
+  getMiDiaLog,
+  toggleMiDia as dbToggleMiDia,
+  type MiDiaRow,
+} from '../db/miDia';
 import { getPhotos, insertPhoto, type PhotoRow } from '../db/photos';
 
 export type Categoria = 'alimentacion' | 'actividad' | 'sueno';
@@ -32,6 +37,7 @@ interface HicStore {
   // User actions
   setUser: (data: Partial<Omit<User, 'id'>>) => Promise<void>;
   clearUser: () => void;
+  resetApp: () => Promise<void>;
 
   // Goals actions
   setGoals: (goals: Goal[]) => void;
@@ -77,20 +83,17 @@ export const useHicStore = create<HicStore>((set, get) => ({
     set({ user: updated });
   },
   clearUser: () => set({ user: null }),
+  resetApp: async () => {
+    await deleteDatabase();
+    set({ user: null, goals: [], miDiaLog: [], photos: [], isHydrated: false });
+    await initDB();
+    await get().loadFromDB();
+  },
 
   // Goals
   setGoals: (goals) => set({ goals }),
   renewGoal: async (goalId, titulo, diasTarget, mes) => {
-    const current = get().goals.find((g) => g.id === goalId);
-    if (!current) return;
-    await upsertGoal({
-      id: goalId,
-      categoria: current.categoria,
-      titulo,
-      dias_target: diasTarget,
-      count_mes: 0,
-      mes,
-    });
+    await upsertGoal({ id: goalId, titulo, dias_target: diasTarget, count_mes: 0, mes });
     const updated = await getGoals();
     set({ goals: updated });
   },

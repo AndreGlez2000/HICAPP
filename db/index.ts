@@ -90,3 +90,23 @@ export async function initDB(): Promise<void> {
 
   return dbPromise;
 }
+
+/**
+ * DANGER: Deletes the database file and resets the app state.
+ * Only for development/testing.
+ */
+export async function deleteDatabase(): Promise<void> {
+  if (db) {
+    await db.closeAsync();
+    db = null;
+  }
+  dbPromise = null;
+  try {
+    await SQLite.deleteDatabaseAsync('hic.db');
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes('not found')) {
+      return;
+    }
+    throw error;
+  }
+}

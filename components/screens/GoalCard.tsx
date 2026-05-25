@@ -6,6 +6,7 @@ import { Icon } from '../primitives/Icon';
 import { SVGRing } from './SVGRing';
 import { router } from 'expo-router';
 import { CATEGORY_LABEL, CATEGORY_ICON, CATEGORY_TINT, CATEGORY_FG, COLORS } from '../../constants/design';
+import { getLocalMonthKey } from '../../utils/date-keys';
 
 interface GoalCardProps {
   goal: Goal;
@@ -15,7 +16,7 @@ export function GoalCard({ goal }: GoalCardProps) {
   const miDiaLog = useHicStore((s) => s.miDiaLog);
   const { id, categoria, dias_target, titulo } = goal;
 
-  const currentMonth = new Date().toISOString().substring(0, 7);
+  const currentMonth = getLocalMonthKey(new Date());
   const logsForCategory = useMemo(() => {
     return miDiaLog.filter(log => log.categoria === categoria && log.completado === 1 && log.fecha.startsWith(currentMonth));
   }, [miDiaLog, categoria, currentMonth]);
