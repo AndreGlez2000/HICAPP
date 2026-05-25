@@ -136,7 +136,7 @@ export function buildHTMLReport(
       </div>
 
       <div class="card streak-container">
-        <h3 class="section-title" style="margin-bottom: 16px;">Racha del período</h3>
+        <h3 class="section-title" style="margin-bottom: 16px;">Racha actual</h3>
         <p class="streak-number">${streak}</p>
         <p class="streak-label">${streak === 1 ? 'día seguido' : 'días seguidos'}</p>
       </div>

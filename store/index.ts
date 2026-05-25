@@ -2,7 +2,11 @@ import { create } from 'zustand';
 import { deleteDatabase, initDB } from '../db';
 import { getUser, upsertUser, type UserRow } from '../db/user';
 import { getGoals, upsertGoal, type GoalRow } from '../db/goals';
-import { getMiDiaLog, toggleMiDia as dbToggleMiDia, type MiDiaRow } from '../db/miDia';
+import {
+  getMiDiaLog,
+  toggleMiDia as dbToggleMiDia,
+  type MiDiaRow,
+} from '../db/miDia';
 import { getPhotos, insertPhoto, type PhotoRow } from '../db/photos';
 
 export type Categoria = 'alimentacion' | 'actividad' | 'sueno';

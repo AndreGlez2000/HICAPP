@@ -7,6 +7,7 @@ import { Icon } from '../../components/primitives/Icon';
 import { Button } from '../../components/primitives/Button';
 import { Card } from '../../components/primitives/Card';
 import { CATEGORY_LABEL, CATEGORY_ICON, CATEGORY_FG, CATEGORY_TINT } from '../../constants/design';
+import { getLocalDateKey, getLocalMonthKey } from '../../utils/date-keys';
 
 const DAY_LABELS = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 
@@ -38,7 +39,7 @@ export default function GoalDetailScreen() {
   const color = CATEGORY_FG[cat];
   const tint = CATEGORY_TINT[cat];
 
-  const currentMonth = new Date().toISOString().substring(0, 7);
+  const currentMonth = getLocalMonthKey(new Date());
   const targetMensual = dias_target * 4;
 
   // ── Renewal window logic ──
@@ -100,7 +101,7 @@ export default function GoalDetailScreen() {
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(today);
       d.setDate(today.getDate() - (6 - i));
-      const dateStr = d.toISOString().substring(0, 10);
+      const dateStr = getLocalDateKey(d);
       const dayLabel = DAY_LABELS[d.getDay()];
       return { dateStr, dayLabel, done: loggedDates.has(dateStr) };
     });

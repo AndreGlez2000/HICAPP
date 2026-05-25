@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useHicStore, Categoria } from '../../store';
 import { Icon } from '../primitives/Icon';
 import { CATEGORY_LABEL, CATEGORY_ICON, CATEGORY_FG } from '../../constants/design';
+import { getLocalDateKey } from '../../utils/date-keys';
 
 interface MiDiaCardProps {
   categoria: Categoria;
@@ -13,17 +14,15 @@ export function MiDiaCard({ categoria, titulo }: MiDiaCardProps) {
   const miDiaLog = useHicStore((s) => s.miDiaLog);
   const toggleMiDia = useHicStore((s) => s.toggleMiDia);
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const isDone = miDiaLog.some(
-    (l) => l.fecha === todayStr && l.categoria === categoria && l.completado === 1
-  );
+  const todayKey = getLocalDateKey(new Date());
+  const isDone = miDiaLog.some((l) => l.categoria === categoria && l.completado === 1 && l.fecha === todayKey);
 
   const color = CATEGORY_FG[categoria];
 
   return (
     <TouchableOpacity
       activeOpacity={isDone ? 1 : 0.8}
-      onPress={isDone ? undefined : () => toggleMiDia(todayStr, categoria)}
+      onPress={isDone ? undefined : () => toggleMiDia(todayKey, categoria)}
       style={[styles.card, isDone && styles.cardDone]}
     >
       {/* Ícono */}

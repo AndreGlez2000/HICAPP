@@ -5,6 +5,7 @@ import { useHicStore, Categoria } from '../../../store';
 import { ScreenHeader } from '../../../components/chrome/ScreenHeader';
 import { MiDiaCard } from '../../../components/screens/MiDiaCard';
 import { Icon } from '../../../components/primitives/Icon';
+import { getLocalDateKey } from '../../../utils/date-keys';
 
 const CATEGORIES: Categoria[] = ['alimentacion', 'actividad', 'sueno'];
 
@@ -25,10 +26,10 @@ export default function MiDiaScreen() {
   const goals = useHicStore((s) => s.goals);
   const setNavigationContext = useHicStore((s) => s.setNavigationContext);
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayKey = getLocalDateKey(new Date());
 
   const doneToday = CATEGORIES.filter((cat) =>
-    miDiaLog.some((l) => l.fecha === todayStr && l.categoria === cat && l.completado === 1)
+    miDiaLog.some((l) => l.categoria === cat && l.completado === 1 && l.fecha === todayKey)
   ).length;
 
   const allThreeDone = doneToday === 3;

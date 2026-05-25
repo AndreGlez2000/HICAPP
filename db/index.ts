@@ -100,6 +100,7 @@ export async function deleteDatabase(): Promise<void> {
     await db.closeAsync();
     db = null;
   }
+  dbPromise = null;
   try {
     await SQLite.deleteDatabaseAsync('hic.db');
   } catch (error: unknown) {

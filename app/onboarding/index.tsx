@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getLocalMonthKey } from '../../utils/date-keys';
 import { View, Text, ScrollView, Alert, KeyboardAvoidingView, Platform, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useCameraPermissions } from 'expo-camera';
@@ -83,7 +84,7 @@ export default function OnboardingScreen() {
     setStep(11);
     try {
       const edad = calculateAge(dob);
-      const currentMonth = new Date().toISOString().substring(0, 7);
+      const currentMonth = getLocalMonthKey(new Date());
       const { upsertGoal, getGoals } = require('../../db/goals');
       const { getDB, initDB } = require('../../db');
 

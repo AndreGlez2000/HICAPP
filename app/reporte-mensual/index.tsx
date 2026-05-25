@@ -240,7 +240,7 @@ function AdherenceSection({ adherence }: { adherence: AdherenceData[] }): React.
 function StreakCard({ streak }: { streak: number }): React.JSX.Element {
   return (
     <Card padded className="mb-4 items-center">
-      <SectionTitle title="Racha del período" />
+      <SectionTitle title="Racha actual" />
       <Text
         className="font-fredoka"
         style={{ fontSize: 72, color: '#e87a3f', lineHeight: 80 }}

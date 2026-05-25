@@ -7,13 +7,15 @@ import { Card } from '../../../components/primitives/Card';
 import { Icon } from '../../../components/primitives/Icon';
 import { router } from 'expo-router';
 import { Alert } from 'react-native';
+import { buildCompletedMaps, getCompletedSetForLocalDate } from '../../../utils/report-range';
+import { getLocalDateKey, getLocalMonthKey } from '../../../utils/date-keys';
 
 export default function DashboardScreen() {
   const allGoals = useHicStore((s) => s.goals);
   const user = useHicStore((s) => s.user);
   const resetApp = useHicStore((s) => s.resetApp);
   const miDiaLog = useHicStore((s) => s.miDiaLog);
-  const currentMonth = new Date().toISOString().substring(0, 7);
+  const currentMonth = getLocalMonthKey(new Date());
 
   // Only show goals for the current month — past months are historical
   const goals = allGoals.filter((g) => g.mes === currentMonth);
@@ -35,41 +37,32 @@ export default function DashboardScreen() {
   const needsRenewal = goals.length > 0 && goals[0].mes !== currentMonth;
 
   const streak = useMemo(() => {
-    // Use local date to avoid UTC midnight mismatch (e.g. 11pm MX = next day UTC)
-    const toLocal = (d: Date): string => {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    };
-
-    // A day counts only when ALL 3 categories are marked complete (like Duolingo's full lesson)
-    const isComplete = (dateStr: string): boolean => {
-      const cats = new Set(
-        miDiaLog.filter(l => l.fecha === dateStr && l.completado === 1).map(l => l.categoria)
-      );
-      return cats.has('alimentacion') && cats.has('actividad') && cats.has('sueno');
-    };
+    const { completedByDate } = buildCompletedMaps(miDiaLog);
 
     const today = new Date();
-    const todayStr = toLocal(today);
-
-    // Grace period: if today isn't complete yet, check from yesterday (same as Duolingo)
-    const checkDate = new Date(today);
-    if (!isComplete(todayStr)) {
-      checkDate.setDate(checkDate.getDate() - 1);
-      if (!isComplete(toLocal(checkDate))) return 0;
-    }
+    const todayKey = getLocalDateKey(today);
+    const todaySet = getCompletedSetForLocalDate(completedByDate, todayKey);
+    const todayComplete = (['alimentacion', 'actividad', 'sueno'] as const).every((cat) => todaySet.has(cat));
+    if (!todayComplete) return 0;
 
     let count = 0;
-    while (isComplete(toLocal(checkDate))) {
-      count++;
-      checkDate.setDate(checkDate.getDate() - 1);
+    const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    while (true) {
+      const dateKey = getLocalDateKey(cursor);
+      const completedSet = getCompletedSetForLocalDate(completedByDate, dateKey);
+      const isComplete = (['alimentacion', 'actividad', 'sueno'] as const).every((cat) => completedSet.has(cat));
+      if (!isComplete) break;
+      count += 1;
+      cursor.setDate(cursor.getDate() - 1);
     }
     return count;
   }, [miDiaLog]);
 
-  const uniqueDays = new Set(miDiaLog.filter(l => l.completado === 1 && l.fecha.startsWith(currentMonth)).map(l => l.fecha)).size;
+  const uniqueDays = new Set(
+    miDiaLog
+      .filter((l) => l.completado === 1 && l.fecha.startsWith(currentMonth))
+      .map((l) => l.fecha)
+  ).size;
 
   return (
     <View className="flex-1 bg-bg">
