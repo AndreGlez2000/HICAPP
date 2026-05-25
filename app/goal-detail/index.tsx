@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, TextInput, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useHicStore, Categoria } from '../../store';
 import { ScreenHeader } from '../../components/chrome/ScreenHeader';
@@ -13,7 +13,14 @@ const DAY_LABELS = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 export default function GoalDetailScreen() {
   const { goalId } = useLocalSearchParams<{ goalId: string }>();
   const goals = useHicStore((s) => s.goals);
+  const allGoals = goals;
   const miDiaLog = useHicStore((s) => s.miDiaLog);
+  const user = useHicStore((s) => s.user);
+  const renewGoal = useHicStore((s) => s.renewGoal);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newTitulo, setNewTitulo] = useState('');
+  const [newDias, setNewDias] = useState('');
 
   const goal = goals.find((g) => String(g.id) === goalId);
 
@@ -34,6 +41,26 @@ export default function GoalDetailScreen() {
   const currentMonth = new Date().toISOString().substring(0, 7);
   const targetMensual = dias_target * 4;
 
+  // ── Renewal window logic ──
+  // Base: day of month from user.created_at (= día de primera consulta)
+  // Next consult: same day next month
+  // Button visible 3 days before next consult
+  const canRenew = useMemo(() => {
+    if (!user?.created_at) return false;
+    const createdAt = new Date(user.created_at);
+    const dayOfMonth = createdAt.getDate();
+    const now = new Date();
+    const nextConsult = new Date(now.getFullYear(), now.getMonth() + 1, dayOfMonth);
+    const windowStart = new Date(nextConsult);
+    windowStart.setDate(windowStart.getDate() - 3);
+    return now >= windowStart;
+  }, [user?.created_at]);
+
+  // Already renewed this month = meta de esta categoría con mes === currentMonth existe
+  const alreadyRenewed = useMemo(() => {
+    return allGoals.some((g) => g.categoria === cat && g.mes === currentMonth);
+  }, [allGoals, cat, currentMonth]);
+
   // Logs this month for this category
   const logsThisMonth = useMemo(() => {
     return miDiaLog.filter(
@@ -45,6 +72,27 @@ export default function GoalDetailScreen() {
   const countMes = logsThisMonth.length;
   const progressPct = targetMensual > 0 ? Math.round((countMes / targetMensual) * 100) : 0;
   const progressFill = Math.min(progressPct / 100, 1);
+
+  const handleOpenRenew = () => {
+    setNewTitulo(titulo);
+    setNewDias(String(dias_target));
+    setModalVisible(true);
+  };
+
+  const handleConfirmRenew = async () => {
+    const parsedDias = parseInt(newDias, 10);
+    if (!newTitulo.trim()) {
+      Alert.alert('Falta el título', 'Escribe un título para la meta.');
+      return;
+    }
+    if (isNaN(parsedDias) || parsedDias < 1 || parsedDias > 7) {
+      Alert.alert('Veces inválidas', 'Ingresa un número entre 1 y 7.');
+      return;
+    }
+    await renewGoal(goal.id, newTitulo.trim(), parsedDias, currentMonth);
+    setModalVisible(false);
+    router.back();
+  };
 
   // Last 7 days (today is index 6)
   const last7 = useMemo(() => {
@@ -129,9 +177,66 @@ export default function GoalDetailScreen() {
           </Card>
         </View>
 
-
+        {/* ── Renovar meta ── */}
+        {canRenew && (
+          <TouchableOpacity
+            style={[styles.renewBtn, alreadyRenewed && styles.renewBtnDisabled]}
+            onPress={alreadyRenewed ? undefined : handleOpenRenew}
+            activeOpacity={alreadyRenewed ? 1 : 0.8}
+          >
+            <Icon name="refresh-cw" size={18} color={alreadyRenewed ? '#bbb' : '#fff'} strokeWidth={2} />
+            <Text style={[styles.renewBtnText, alreadyRenewed && styles.renewBtnTextDisabled]}>
+              {alreadyRenewed ? 'Ya renovada este mes' : 'Renovar meta'}
+            </Text>
+          </TouchableOpacity>
+        )}
 
       </ScrollView>
+
+      {/* ── Modal de renovación ── */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Renovar meta</Text>
+            <Text style={styles.modalSub}>{CATEGORY_LABEL[cat]}</Text>
+
+            <Text style={styles.inputLabel}>Título</Text>
+            <TextInput
+              style={styles.input}
+              value={newTitulo}
+              onChangeText={setNewTitulo}
+              placeholder="Describe tu meta..."
+              placeholderTextColor="#bbb"
+            />
+
+            <Text style={styles.inputLabel}>Veces por semana</Text>
+            <TextInput
+              style={styles.input}
+              value={newDias}
+              onChangeText={setNewDias}
+              keyboardType="number-pad"
+              placeholder="1 – 7"
+              placeholderTextColor="#bbb"
+              maxLength={1}
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
+                <Text style={styles.cancelBtnText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.confirmBtn, { backgroundColor: color }]} onPress={handleConfirmRenew}>
+                <Text style={styles.confirmBtnText}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -170,5 +275,40 @@ const styles = StyleSheet.create({
   statNumber: { fontFamily: 'Fredoka_700Bold', fontSize: 36, lineHeight: 40 },
   statLabel: { fontFamily: 'Nunito_400Regular', fontSize: 12, color: '#888', marginTop: 2 },
 
+  // Renew button
+  renewBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, backgroundColor: '#e87a3f', borderRadius: 16,
+    paddingVertical: 14, paddingHorizontal: 24, marginTop: 4, marginBottom: 8,
+  },
+  renewBtnDisabled: { backgroundColor: '#f0ece9' },
+  renewBtnText: { fontFamily: 'Nunito_700Bold', fontSize: 15, color: '#fff' },
+  renewBtnTextDisabled: { color: '#bbb' },
 
+  // Modal
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center', justifyContent: 'center', padding: 24,
+  },
+  modalCard: {
+    width: '100%', backgroundColor: '#fff',
+    borderRadius: 24, padding: 24,
+  },
+  modalTitle: { fontFamily: 'Nunito_700Bold', fontSize: 18, color: '#1a1a2e', marginBottom: 2 },
+  modalSub: { fontFamily: 'Nunito_400Regular', fontSize: 13, color: '#888', marginBottom: 20 },
+  inputLabel: { fontFamily: 'Nunito_700Bold', fontSize: 13, color: '#555', marginBottom: 6 },
+  input: {
+    borderWidth: 1.5, borderColor: '#e8e0e5', borderRadius: 12,
+    paddingHorizontal: 14, paddingVertical: 10,
+    fontFamily: 'Nunito_400Regular', fontSize: 15, color: '#1a1a2e',
+    marginBottom: 16,
+  },
+  modalActions: { flexDirection: 'row', gap: 12, marginTop: 4 },
+  cancelBtn: {
+    flex: 1, borderWidth: 1.5, borderColor: '#e8e0e5',
+    borderRadius: 14, paddingVertical: 12, alignItems: 'center',
+  },
+  cancelBtnText: { fontFamily: 'Nunito_700Bold', fontSize: 14, color: '#888' },
+  confirmBtn: { flex: 1, borderRadius: 14, paddingVertical: 12, alignItems: 'center' },
+  confirmBtnText: { fontFamily: 'Nunito_700Bold', fontSize: 14, color: '#fff' },
 });

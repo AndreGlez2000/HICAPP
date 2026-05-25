@@ -22,21 +22,21 @@ export function MiDiaCard({ categoria, titulo }: MiDiaCardProps) {
 
   return (
     <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={() => toggleMiDia(todayStr, categoria)}
-      style={styles.card}
+      activeOpacity={isDone ? 1 : 0.8}
+      onPress={isDone ? undefined : () => toggleMiDia(todayStr, categoria)}
+      style={[styles.card, isDone && styles.cardDone]}
     >
       {/* Ícono */}
-      <View style={styles.iconBox}>
-        <Icon name={CATEGORY_ICON[categoria]} size={22} color="#aaa" strokeWidth={1.5} />
+      <View style={[styles.iconBox, isDone && styles.iconBoxDone]}>
+        <Icon name={CATEGORY_ICON[categoria]} size={22} color={isDone ? '#ccc' : '#aaa'} strokeWidth={1.5} />
       </View>
 
       {/* Texto */}
       <View style={styles.textBlock}>
-        <Text style={[styles.catLabel, { color }]}>
+        <Text style={[styles.catLabel, { color: isDone ? '#ccc' : color }]}>
           {CATEGORY_LABEL[categoria].toUpperCase()}
         </Text>
-        <Text style={styles.titulo} numberOfLines={2}>{titulo}</Text>
+        <Text style={[styles.titulo, isDone && styles.tituloDone]} numberOfLines={2}>{titulo}</Text>
       </View>
 
       {/* Checkmark */}
@@ -99,5 +99,17 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#d8d8d8',
     backgroundColor: 'transparent',
+  },
+  cardDone: {
+    backgroundColor: '#fafafa',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  iconBoxDone: {
+    backgroundColor: '#f0f0f0',
+  },
+  tituloDone: {
+    color: '#bbb',
+    textDecorationLine: 'line-through',
   },
 });

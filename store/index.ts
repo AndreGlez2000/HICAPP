@@ -89,16 +89,7 @@ export const useHicStore = create<HicStore>((set, get) => ({
   // Goals
   setGoals: (goals) => set({ goals }),
   renewGoal: async (goalId, titulo, diasTarget, mes) => {
-    const current = get().goals.find((g) => g.id === goalId);
-    if (!current) return;
-    await upsertGoal({
-      id: goalId,
-      categoria: current.categoria,
-      titulo,
-      dias_target: diasTarget,
-      count_mes: 0,
-      mes,
-    });
+    await upsertGoal({ id: goalId, titulo, dias_target: diasTarget, count_mes: 0, mes });
     const updated = await getGoals();
     set({ goals: updated });
   },
