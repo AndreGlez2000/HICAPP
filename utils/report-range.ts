@@ -1,4 +1,7 @@
 import type { Categoria, Goal, MiDiaEntry, Photo } from '../store';
+import { getLocalDateKey, getLocalMonthKey } from './date-keys';
+
+export { getLocalDateKey, getLocalMonthKey } from './date-keys';
 
 export type ReportRange = {
   startMonth: string;
@@ -31,16 +34,6 @@ const MONTH_NAMES_ES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
-
-const pad = (value: number): string => String(value).padStart(2, '0');
-
-export function getLocalMonthKey(date: Date): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}`;
-}
-
-export function getLocalDateKey(date: Date): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
 
 export function formatMonthLabel(monthKey: string): string {
   const [year, monthNum] = monthKey.split('-').map(Number);
@@ -102,7 +95,7 @@ export function hasLogsInRange(logs: MiDiaEntry[], range: ReportRange): boolean 
   });
 }
 
-function buildCompletedMaps(logs: MiDiaEntry[]) {
+export function buildCompletedMaps(logs: MiDiaEntry[]) {
   const completedByDate = new Map<string, Set<Categoria>>();
   const completedByMonthCat = new Map<string, number>();
 
@@ -120,6 +113,18 @@ function buildCompletedMaps(logs: MiDiaEntry[]) {
   }
 
   return { completedByDate, completedByMonthCat };
+}
+
+export function getCompletedSetForLocalDate(
+  completedByDate: Map<string, Set<Categoria>>,
+  localDateKey: string
+): Set<Categoria> {
+  const completed = new Set<Categoria>();
+  const localSet = completedByDate.get(localDateKey);
+  if (localSet) {
+    localSet.forEach((cat) => completed.add(cat));
+  }
+  return completed;
 }
 
 export function buildRangeStats(
@@ -164,25 +169,23 @@ export function buildRangeStats(
     return { categoria, completed, total: totalDays, pct };
   });
 
-  const startDate = getMonthStartDate(range.startMonth);
-  const endDate = getMonthEndDate(range.endMonth, today);
-  let maxStreak = 0;
+  const todayKey = getLocalDateKey(today);
+  const todaySet = getCompletedSetForLocalDate(completedByDate, todayKey);
+  const todayComplete = CATEGORY_LIST.every((cat) => todaySet.has(cat));
   let currentStreak = 0;
-  const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-  while (cursor <= endDate) {
-    const dateKey = getLocalDateKey(cursor);
-    const completedSet = completedByDate.get(dateKey);
-    const isComplete = completedSet
-      ? CATEGORY_LIST.every((cat) => completedSet.has(cat))
-      : false;
-    if (isComplete) {
+
+  if (todayComplete) {
+    const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    while (true) {
+      const dateKey = getLocalDateKey(cursor);
+      const completedSet = getCompletedSetForLocalDate(completedByDate, dateKey);
+      const isComplete = CATEGORY_LIST.every((cat) => completedSet.has(cat));
+      if (!isComplete) break;
       currentStreak += 1;
-      if (currentStreak > maxStreak) maxStreak = currentStreak;
-    } else {
-      currentStreak = 0;
+      cursor.setDate(cursor.getDate() - 1);
     }
-    cursor.setDate(cursor.getDate() + 1);
   }
+
 
   const photosInRange = photos
     .filter((photo) => {
@@ -191,7 +194,7 @@ export function buildRangeStats(
     })
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
 
-  return { adherence, streak: maxStreak, photosInRange };
+  return { adherence, streak: currentStreak, photosInRange };
 }
 
 export function buildGoalsByMonth(

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getLocalMonthKey } from '../../utils/date-keys';
 import {
   View,
   Text,
@@ -81,7 +82,7 @@ export default function GoalRenewalScreen() {
       // Last step — save all
       setSaving(true);
       try {
-        const currentMonth = new Date().toISOString().substring(0, 7);
+        const currentMonth = getLocalMonthKey(new Date());
         for (const item of renewalData) {
           await renewGoal(item.goalId, item.titulo.trim(), item.diasTarget, currentMonth);
         }

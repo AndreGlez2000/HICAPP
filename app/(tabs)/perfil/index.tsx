@@ -1,4 +1,5 @@
 import React from 'react';
+import { getLocalMonthKey } from '../../../utils/date-keys';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useHicStore } from '../../../store';
@@ -25,7 +26,7 @@ export default function PerfilScreen() {
 
   // Stats
   const daysLogged = new Set(miDiaLog.filter((l) => l.completado === 1).map((l) => l.fecha)).size;
-  const currentMonth = new Date().toISOString().substring(0, 7);
+  const currentMonth = getLocalMonthKey(new Date());
   const daysThisMonth = new Set(
     miDiaLog.filter((l) => l.completado === 1 && l.fecha.startsWith(currentMonth)).map((l) => l.fecha)
   ).size;
