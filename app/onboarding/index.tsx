@@ -82,8 +82,42 @@ export default function OnboardingScreen() {
   const finishOnboarding = async () => {
     setStep(11);
     try {
-      // 1. User
       const edad = calculateAge(dob);
+      const currentMonth = new Date().toISOString().substring(0, 7);
+      const { upsertGoal, getGoals } = require('../../db/goals');
+      const { getDB, initDB } = require('../../db');
+
+      // Ensure the DB is ready before calling getDB()
+      await initDB();
+      const db = getDB();
+
+      // Wrap all writes in a single transaction so that either every write
+      // succeeds or none do — preventing a partially-saved onboarding state.
+      await db.withTransactionAsync(async () => {
+        // 1. User
+        const { upsertUser } = require('../../db/user');
+        await upsertUser({
+          nombre: nombre.trim(),
+          nickname: nickname.trim(),
+          edad,
+          peso,
+          talla,
+          expediente: expediente.trim(),
+          onboarding_complete: 1,
+          fecha_nacimiento: dob,
+        });
+
+        // 2. Goals — clear all prior data, then insert the 3 new goals
+        await db.runAsync('DELETE FROM goals');
+        await db.runAsync('DELETE FROM mi_dia_log');
+        await db.runAsync('DELETE FROM photos');
+        await upsertGoal({ categoria: 'alimentacion', titulo: alimentacionTitulo.trim(), dias_target: alimentacionDias, count_mes: 0, mes: currentMonth });
+        await upsertGoal({ categoria: 'actividad',    titulo: actividadTitulo.trim(),    dias_target: actividadDias,    count_mes: 0, mes: currentMonth });
+        await upsertGoal({ categoria: 'sueno',        titulo: suenoTitulo.trim(),        dias_target: suenoDias,        count_mes: 0, mes: currentMonth });
+      });
+
+      // Sync in-memory store after the transaction commits.
+      // setUserStore re-reads from DB internally to keep the store consistent.
       await setUserStore({
         nombre: nombre.trim(),
         nickname: nickname.trim(),
@@ -94,22 +128,12 @@ export default function OnboardingScreen() {
         onboarding_complete: 1,
         fecha_nacimiento: dob,
       });
-
-      // 2. Goals — limpia todo dato previo, luego inserta las 3 nuevas
-      const currentMonth = new Date().toISOString().substring(0, 7);
-      const { upsertGoal, getGoals } = require('../../db/goals');
-      const { getDB } = require('../../db');
-      await getDB().runAsync('DELETE FROM goals');
-      await getDB().runAsync('DELETE FROM mi_dia_log');
-      await getDB().runAsync('DELETE FROM photos');
-      await upsertGoal({ categoria: 'alimentacion', titulo: alimentacionTitulo.trim(), dias_target: alimentacionDias, count_mes: 0, mes: currentMonth });
-      await upsertGoal({ categoria: 'actividad',    titulo: actividadTitulo.trim(),    dias_target: actividadDias,    count_mes: 0, mes: currentMonth });
-      await upsertGoal({ categoria: 'sueno',        titulo: suenoTitulo.trim(),        dias_target: suenoDias,        count_mes: 0, mes: currentMonth });
       const goalsDb = await getGoals();
       setGoalsStore(goalsDb);
 
       router.replace('/(tabs)/metas');
     } catch (err) {
+      // Transaction automatically rolled back on throw — DB state is clean
       Alert.alert('Error al guardar', 'Intenta de nuevo');
       setStep(10);
     }

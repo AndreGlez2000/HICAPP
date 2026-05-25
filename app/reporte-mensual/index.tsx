@@ -5,7 +5,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { buildHTMLReport } from '../../utils/pdf-template';
 import { DatePickerField } from '../../components/primitives/DatePickerField';
-import { useHicStore, type Photo } from '../../store';
+import { useHicStore, type MiDiaEntry, type Photo } from '../../store';
 import { ScreenHeader } from '../../components/chrome/ScreenHeader';
 import { Card } from '../../components/primitives/Card';
 import { ProgressBar } from '../../components/primitives/ProgressBar';
