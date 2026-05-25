@@ -36,11 +36,11 @@ export default function GoalRenewalScreen() {
   const renewGoal = useHicStore((s) => s.renewGoal);
   const loadFromDB = useHicStore((s) => s.loadFromDB);
 
-  // Pre-populate from store
   const [renewalData, setRenewalData] = useState(() =>
     STEPS.map((cat) => {
       const existing = goals.find((g) => g.categoria === cat);
       return {
+        goalId: existing?.id ?? 0,
         titulo: existing?.titulo ?? '',
         diasTarget: existing?.dias_target ?? 5,
       };
@@ -78,33 +78,20 @@ export default function GoalRenewalScreen() {
     if (step < 2) {
       setStep((step + 1) as RenewalStep);
     } else {
-      await handleFinish();
-    }
-  };
-
-  const handleFinish = async () => {
-    setSaving(true);
-    try {
-      const currentMonth = new Date().toISOString().substring(0, 7);
-
-      // Write all 3 goals to SQLite via renewGoal
-      for (let i = 0; i < STEPS.length; i++) {
-        const cat = STEPS[i];
-        const goal = goals.find((g) => g.categoria === cat);
-        if (goal) {
-          await renewGoal(goal.id, renewalData[i].titulo.trim(), renewalData[i].diasTarget, currentMonth);
+      // Last step — save all
+      setSaving(true);
+      try {
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        for (const item of renewalData) {
+          await renewGoal(item.goalId, item.titulo.trim(), item.diasTarget, currentMonth);
         }
+        await loadFromDB();
+        router.replace('/(tabs)/metas');
+      } catch (err) {
+        console.error('[GoalRenewal] Error saving:', err);
+        setError('Error al guardar. Intenta de nuevo.');
+        setSaving(false);
       }
-
-      // Sync store from DB
-      await loadFromDB();
-
-      // Navigate back to dashboard
-      router.replace('/(tabs)/metas');
-    } catch (err) {
-      console.error('[GoalRenewal] Error saving:', err);
-      setError('Error al guardar. Intenta de nuevo.');
-      setSaving(false);
     }
   };
 
@@ -192,7 +179,7 @@ export default function GoalRenewalScreen() {
         )}
 
         <Button onPress={handleNext} disabled={saving}>
-          {step < 2 ? 'Siguiente →' : 'Confirmar metas →'}
+          {step < 2 ? 'Siguiente →' : 'Guardar metas'}
         </Button>
       </ScrollView>
     </KeyboardAvoidingView>

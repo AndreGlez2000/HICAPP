@@ -92,38 +92,64 @@ export default function FotosScreen() {
           <Button onPress={handleAddPhoto}>Agregar foto</Button>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 8 }}>
-          <Text className="font-fredoka text-lg text-ink mb-3">
-            {photos.length} {photos.length === 1 ? 'foto' : 'fotos'}
-          </Text>
+        <View style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 8, paddingBottom: 100 }}>
+            <Text className="font-fredoka text-lg text-ink mb-3">
+              {photos.length} {photos.length === 1 ? 'foto' : 'fotos'}
+            </Text>
 
-          <View className="flex-row flex-wrap gap-2">
-            {photos.map((photo) => (
-              <TouchableOpacity
-                key={photo.id}
-                activeOpacity={0.85}
-                style={{ width: PHOTO_SIZE, height: PHOTO_SIZE }}
-                className="rounded-2xl overflow-hidden bg-[#fdf0e8]"
-                onPress={() => router.push(`/modals/photo-detail?id=${photo.id}`)}
-              >
-                {photo.uri && !photo.uri.startsWith('demo://') ? (
-                  <Image
-                    source={{ uri: photo.uri }}
-                    style={{ width: PHOTO_SIZE, height: PHOTO_SIZE }}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View
-                    style={{ width: PHOTO_SIZE, height: PHOTO_SIZE }}
-                    className="items-center justify-center"
-                  >
-                    <Text style={{ fontSize: 36 }}>🍽️</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
+            <View className="flex-row flex-wrap gap-2">
+              {photos.map((photo) => (
+                <TouchableOpacity
+                  key={photo.id}
+                  activeOpacity={0.85}
+                  style={{ width: PHOTO_SIZE, height: PHOTO_SIZE }}
+                  className="rounded-2xl overflow-hidden bg-[#fdf0e8]"
+                  onPress={() => router.push(`/modals/photo-detail?id=${photo.id}`)}
+                >
+                  {photo.uri && !photo.uri.startsWith('demo://') ? (
+                    <Image
+                      source={{ uri: photo.uri }}
+                      style={{ width: PHOTO_SIZE, height: PHOTO_SIZE }}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View
+                      style={{ width: PHOTO_SIZE, height: PHOTO_SIZE }}
+                      className="items-center justify-center"
+                    >
+                      <Text style={{ fontSize: 36 }}>🍽️</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+
+          {/* FAB */}
+          <TouchableOpacity
+            onPress={handleAddPhoto}
+            activeOpacity={0.85}
+            style={{
+              position: 'absolute',
+              bottom: 24,
+              right: 24,
+              width: 60,
+              height: 60,
+              borderRadius: 30,
+              backgroundColor: '#e87a3f',
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: '#e87a3f',
+              shadowOpacity: 0.45,
+              shadowRadius: 12,
+              shadowOffset: { width: 0, height: 4 },
+              elevation: 6,
+            }}
+          >
+            <Icon name="camera" size={26} color="#fff" />
+          </TouchableOpacity>
+        </View>
       )}
     </View>
   );
