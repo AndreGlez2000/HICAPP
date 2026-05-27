@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal, TextInput, Alert, Image } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useHicStore, Categoria } from '../../store';
 import { ScreenHeader } from '../../components/chrome/ScreenHeader';
@@ -8,6 +8,12 @@ import { Button } from '../../components/primitives/Button';
 import { Card } from '../../components/primitives/Card';
 import { CATEGORY_LABEL, CATEGORY_ICON, CATEGORY_FG, CATEGORY_TINT } from '../../constants/design';
 import { getLocalDateKey, getLocalMonthKey } from '../../utils/date-keys';
+
+const MASCOT_IMAGES = {
+  alimentacion: require('../../assets/sonrisas_alimentacion.png'),
+  actividad: require('../../assets/sonrisas_actividad.png'),
+  sueno: require('../../assets/sonrisas_sueno.png'),
+};
 
 const DAY_LABELS = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 
@@ -95,12 +101,18 @@ export default function GoalDetailScreen() {
     router.back();
   };
 
-  // Last 7 days (today is index 6)
-  const last7 = useMemo(() => {
+  // Current week (Monday to Sunday)
+  const currentWeek = useMemo(() => {
     const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 is Sunday, 1 is Monday
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - daysToSubtract);
+    
     return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(today);
-      d.setDate(today.getDate() - (6 - i));
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
       const dateStr = getLocalDateKey(d);
       const dayLabel = DAY_LABELS[d.getDay()];
       return { dateStr, dayLabel, done: loggedDates.has(dateStr) };
@@ -119,8 +131,8 @@ export default function GoalDetailScreen() {
 
         {/* ── Hero card ── */}
         <Card style={styles.heroCard}>
-          <View style={[styles.iconCircle, { backgroundColor: tint }]}>
-            <Icon name={CATEGORY_ICON[cat]} size={40} color={color} strokeWidth={2} />
+          <View style={{ marginBottom: 16 }}>
+            <Image source={MASCOT_IMAGES[cat]} style={{ width: 100, height: 100 }} resizeMode="contain" />
           </View>
           <Text style={styles.heroTitle}>{titulo}</Text>
           <Text style={styles.heroSub}>
@@ -143,11 +155,11 @@ export default function GoalDetailScreen() {
           <Text style={styles.pctLabel}>{progressPct}% de cumplimiento mensual</Text>
         </Card>
 
-        {/* ── Últimos 7 días ── */}
+        {/* ── Esta semana ── */}
         <Card style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Últimos 7 días</Text>
+          <Text style={styles.sectionTitle}>Esta semana</Text>
           <View style={styles.weekRow}>
-            {last7.map(({ dateStr, dayLabel, done }) => (
+            {currentWeek.map(({ dateStr, dayLabel, done }) => (
               <View key={dateStr} style={styles.dayCol}>
                 <View style={[
                   styles.dayCell,
