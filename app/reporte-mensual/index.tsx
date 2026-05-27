@@ -241,7 +241,7 @@ function StreakCard({ streak }: { streak: number }): React.JSX.Element {
   return (
     <Card padded className="mb-4 items-center flex-row justify-center">
       <View className="items-center z-10 mr-[-20px] bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-        <SectionTitle title="Racha actual" />
+        <SectionTitle title="Racha más alta" />
         <Text
           className="font-fredoka"
           style={{ fontSize: 72, color: '#e87a3f', lineHeight: 80 }}

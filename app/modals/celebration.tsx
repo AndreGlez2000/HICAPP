@@ -43,13 +43,23 @@ export default function CelebrationModal() {
   const streak = useMemo(() => {
     const { completedByDate } = buildCompletedMaps(miDiaLog);
     const today = new Date();
-    const todayKey = getLocalDateKey(today);
-    const todaySet = getCompletedSetForLocalDate(completedByDate, todayKey);
-    const todayComplete = (['alimentacion', 'actividad', 'sueno'] as const).every((cat) => todaySet.has(cat));
-    if (!todayComplete) return 0;
-
+    
     let count = 0;
     const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    // Check today
+    const todayKey = getLocalDateKey(cursor);
+    const todaySet = getCompletedSetForLocalDate(completedByDate, todayKey);
+    const isTodayComplete = (['alimentacion', 'actividad', 'sueno'] as const).every((cat) => todaySet.has(cat));
+    
+    if (isTodayComplete) {
+      count += 1;
+    }
+
+    // Move to yesterday
+    cursor.setDate(cursor.getDate() - 1);
+
+    // Loop backwards
     while (true) {
       const dateKey = getLocalDateKey(cursor);
       const completedSet = getCompletedSetForLocalDate(completedByDate, dateKey);
@@ -58,6 +68,7 @@ export default function CelebrationModal() {
       count += 1;
       cursor.setDate(cursor.getDate() - 1);
     }
+    
     return count;
   }, [miDiaLog]);
 
@@ -103,14 +114,25 @@ export default function CelebrationModal() {
     // Confetti
     confettiAnims.forEach((anim, i) => {
       const dot = CONFETTI_DOTS[i];
-      Animated.parallel([
-        Animated.timing(anim.opacity, { toValue: 1, duration: 400, delay: dot.delay, useNativeDriver: true }),
+      
+      // Fade in
+      Animated.timing(anim.opacity, { 
+        toValue: 1, 
+        duration: 600, 
+        delay: dot.delay, 
+        useNativeDriver: true 
+      }).start();
+
+      // Continuous smooth bobbing
+      Animated.sequence([
+        Animated.delay(dot.delay),
         Animated.loop(
           Animated.sequence([
-            Animated.timing(anim.translateY, { toValue: -12, duration: 800, delay: dot.delay, useNativeDriver: true }),
-            Animated.timing(anim.translateY, { toValue: 12, duration: 800, useNativeDriver: true }),
+            Animated.timing(anim.translateY, { toValue: -15, duration: 1500, useNativeDriver: true }),
+            Animated.timing(anim.translateY, { toValue: 15, duration: 3000, useNativeDriver: true }),
+            Animated.timing(anim.translateY, { toValue: 0, duration: 1500, useNativeDriver: true }),
           ])
-        ),
+        )
       ]).start();
     });
 
