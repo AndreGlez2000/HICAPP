@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, ScrollView, Text, TouchableOpacity } from 'react-native';
+import { View, ScrollView, Text, TouchableOpacity, Image } from 'react-native';
 import { useHicStore } from '../../../store';
 import { ScreenHeader } from '../../../components/chrome/ScreenHeader';
 import { GoalCard } from '../../../components/screens/GoalCard';
@@ -70,9 +70,17 @@ export default function DashboardScreen() {
         title={`¡Hola, ${user?.nickname || 'Usuario'}!`} 
         subtitle="Así va el mes" 
         right={
-          <View className="bg-[#e87a3f] px-3.5 py-2 rounded-full flex-row items-center gap-1.5">
-            <Icon name="flame" size={18} color="#fff" />
-            <Text className="font-nunito-bold text-sm text-white">{streak} días</Text>
+          <View className="flex-row items-center">
+            {/* Burbuja de texto */}
+            <View className="bg-[#e87a3f] px-3.5 py-1.5 rounded-2xl rounded-br-sm flex-row items-center mr-[-10px] mb-3 z-10 border-[2.5px] border-bg shadow-sm">
+              <Text className="font-nunito-bold text-sm text-white">¡{streak} {streak === 1 ? 'día' : 'días'}!</Text>
+            </View>
+            {/* Mascotita Sonrisas */}
+            <Image 
+              source={require('../../../assets/sonrisas.png')} 
+              style={{ width: 44, height: 44, transform: [{ translateY: 2 }] }} 
+              resizeMode="contain" 
+            />
           </View>
         }
       />

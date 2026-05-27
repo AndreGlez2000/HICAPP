@@ -175,8 +175,8 @@ export default function OnboardingScreen() {
           >
             {/* Logo */}
             <Image
-              source={require('../../assets/logo_no_bg_v2.png')}
-              style={{ width: 220, height: 220, marginBottom: 32 }}
+              source={require('../../assets/betty_logo.png')}
+              style={{ width: 280, height: 120, marginBottom: 32 }}
               resizeMode="contain"
             />
 
