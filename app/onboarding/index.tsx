@@ -183,7 +183,7 @@ export default function OnboardingScreen() {
             {/* Título */}
             <Text
               className="font-fredoka text-4xl text-center mb-4"
-              style={{ color: '#ffffff' }}
+              style={{ color: '#522c45' }}
             >
               ¡Bienvenido a HiC!
             </Text>
@@ -191,7 +191,7 @@ export default function OnboardingScreen() {
             {/* Subtítulo */}
             <Text
               className="font-nunito text-base text-center"
-              style={{ color: 'rgba(255,255,255,0.85)', lineHeight: 24, paddingHorizontal: 8 }}
+              style={{ color: '#70787c', lineHeight: 24, paddingHorizontal: 8 }}
             >
               Tu compañero en este viaje hacia un estilo de vida más saludable. Vamos a configurar tu perfil en unos pocos pasos.
             </Text>
@@ -201,7 +201,7 @@ export default function OnboardingScreen() {
 
             {__DEV__ && (
               <TouchableOpacity onPress={handleDemoMode} className="items-center py-3">
-                <Text className="font-nunito text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <Text className="font-nunito text-sm" style={{ color: '#a0aab0' }}>
                   ⚗️ Versión de prueba
                 </Text>
               </TouchableOpacity>
@@ -442,7 +442,7 @@ export default function OnboardingScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={{ flex: 1, backgroundColor: isWelcome ? '#522c45' : undefined }}
+      style={{ flex: 1, backgroundColor: isWelcome ? '#ffffff' : undefined }}
       className={isWelcome ? '' : 'bg-bg'}
     >
       <ScreenHeader
