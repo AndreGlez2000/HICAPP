@@ -132,6 +132,14 @@ async function insertDemoData(db: DBLike): Promise<void> {
   // alimentacion: most days, actividad: every 2-3 days, sueno: most nights
   const currentLogs: LogEntry[] = [];
   for (let d = 1; d <= Math.min(today, 28); d++) {
+    // Artificial 5-day streak right before today so "racha actual" is always visible in demo
+    if (d >= today - 5 && d < today) {
+      currentLogs.push({ day: d, categoria: 'alimentacion' });
+      currentLogs.push({ day: d, categoria: 'actividad' });
+      currentLogs.push({ day: d, categoria: 'sueno' });
+      continue;
+    }
+
     if (d % 9 !== 0) currentLogs.push({ day: d, categoria: 'alimentacion' });
     if (d % 3 === 0 || d % 7 === 0) currentLogs.push({ day: d, categoria: 'actividad' });
     if (d % 5 !== 0) currentLogs.push({ day: d, categoria: 'sueno' });

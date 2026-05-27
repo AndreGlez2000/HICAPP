@@ -169,23 +169,28 @@ export function buildRangeStats(
     return { categoria, completed, total: totalDays, pct };
   });
 
-  const todayKey = getLocalDateKey(today);
-  const todaySet = getCompletedSetForLocalDate(completedByDate, todayKey);
-  const todayComplete = CATEGORY_LIST.every((cat) => todaySet.has(cat));
+  let highestStreak = 0;
   let currentStreak = 0;
-
-  if (todayComplete) {
-    const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    while (true) {
-      const dateKey = getLocalDateKey(cursor);
-      const completedSet = getCompletedSetForLocalDate(completedByDate, dateKey);
-      const isComplete = CATEGORY_LIST.every((cat) => completedSet.has(cat));
-      if (!isComplete) break;
+  
+  const startDate = getMonthStartDate(range.startMonth);
+  const endDate = getMonthEndDate(range.endMonth, today);
+  
+  const cursor = new Date(startDate);
+  
+  while (cursor <= endDate) {
+    const dateKey = getLocalDateKey(cursor);
+    const completedSet = getCompletedSetForLocalDate(completedByDate, dateKey);
+    const isComplete = CATEGORY_LIST.every((cat) => completedSet.has(cat));
+    
+    if (isComplete) {
       currentStreak += 1;
-      cursor.setDate(cursor.getDate() - 1);
+      highestStreak = Math.max(highestStreak, currentStreak);
+    } else {
+      currentStreak = 0;
     }
+    
+    cursor.setDate(cursor.getDate() + 1);
   }
-
 
   const photosInRange = photos
     .filter((photo) => {
@@ -194,7 +199,7 @@ export function buildRangeStats(
     })
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
 
-  return { adherence, streak: currentStreak, photosInRange };
+  return { adherence, streak: highestStreak, photosInRange };
 }
 
 export function buildGoalsByMonth(
