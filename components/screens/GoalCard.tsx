@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useHicStore, Categoria, Goal } from '../../store';
 import { Card } from '../primitives/Card';
 import { Icon } from '../primitives/Icon';
@@ -7,6 +7,12 @@ import { SVGRing } from './SVGRing';
 import { router } from 'expo-router';
 import { CATEGORY_LABEL, CATEGORY_ICON, CATEGORY_TINT, CATEGORY_FG, COLORS } from '../../constants/design';
 import { getLocalMonthKey } from '../../utils/date-keys';
+
+const MASCOT_IMAGES = {
+  alimentacion: require('../../assets/sonrisas_alimentacion.png'),
+  actividad: require('../../assets/sonrisas_actividad.png'),
+  sueno: require('../../assets/sonrisas_sueno.png'),
+};
 
 interface GoalCardProps {
   goal: Goal;
@@ -31,7 +37,7 @@ export function GoalCard({ goal }: GoalCardProps) {
           <View className="relative w-[80px] h-[80px] flex-shrink-0">
             <SVGRing size={80} strokeWidth={8} progress={progress} color={CATEGORY_FG[categoria]} />
             <View className="absolute inset-0 items-center justify-center">
-              <Icon name={CATEGORY_ICON[categoria]} size={30} color={CATEGORY_FG[categoria]} strokeWidth={2.5} />
+              <Image source={MASCOT_IMAGES[categoria]} style={{ width: 44, height: 44 }} resizeMode="contain" />
             </View>
           </View>
 
