@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../primitives/Icon';
 
 interface ScreenHeaderProps {
-  title: string;
+  title?: React.ReactNode;
   subtitle?: string;
   onBack?: () => void;
   showBack?: boolean;
@@ -29,7 +29,7 @@ export function ScreenHeader({
       className="flex-row items-start justify-between px-6 pb-4 gap-3 flex-shrink-0"
       style={{ paddingTop: Math.max(insets.top + 16, 48) }}
     >
-      <View className="flex-row items-start gap-3 flex-1">
+      <View className="flex-row items-center gap-3 flex-1">
         {showBack && onBack && (
           <TouchableOpacity
             onPress={onBack}
@@ -40,13 +40,17 @@ export function ScreenHeader({
           </TouchableOpacity>
         )}
 
-        <View className="min-w-0 flex-1">
-          <Text
-            className={`font-fredoka text-[28px] leading-tight ${titleColor}`}
-            numberOfLines={1}
-          >
-            {title}
-          </Text>
+        <View className="min-w-0 flex-1 justify-center">
+          {typeof title === 'string' ? (
+            <Text
+              className={`font-fredoka text-[28px] leading-tight ${titleColor}`}
+              numberOfLines={1}
+            >
+              {title}
+            </Text>
+          ) : (
+            title
+          )}
           {subtitle && (
             <Text className={`font-nunito text-sm mt-0.5 ${subtitleColor}`}>
               {subtitle}

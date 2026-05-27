@@ -185,7 +185,7 @@ export default function OnboardingScreen() {
               className="font-fredoka text-4xl text-center mb-4"
               style={{ color: '#522c45' }}
             >
-              ¡Bienvenido a HiC!
+              ¡Bienvenido a BETTY!
             </Text>
 
             {/* Subtítulo */}
@@ -212,22 +212,19 @@ export default function OnboardingScreen() {
       case 1:
         return (
           <View className="flex-1 justify-center items-center" style={{ paddingHorizontal: 8 }}>
-            {/* Ícono principal */}
-            <View
-              className="w-24 h-24 rounded-full items-center justify-center mb-8"
-              style={{ backgroundColor: 'rgba(82,44,69,0.12)' }}
-            >
-              <Icon name="sparkles" size={48} color="#522c45" />
+            {/* Mascot Image */}
+            <View className="items-center justify-center mb-6">
+              <Image source={require('../../assets/sonrisas_pregunta.png')} style={{ width: 140, height: 140 }} resizeMode="contain" />
             </View>
 
             {/* Título */}
             <Text className="font-fredoka text-primary text-3xl text-center mb-4">
-              Cómo funciona HiC
+              Cómo funciona BETTY
             </Text>
 
             {/* Descripción general */}
             <Text className="font-nunito text-base text-center mb-8" style={{ color: '#555', lineHeight: 24 }}>
-              HiC te ayuda a llevar un registro de tus hábitos de alimentación, actividad física y sueño para que puedas alcanzar tus metas de salud.
+              BETTY te ayuda a llevar un registro de tus hábitos de alimentación, actividad física y sueño para que puedas alcanzar tus metas de salud.
             </Text>
 
             {/* Filas de características */}
@@ -289,7 +286,7 @@ export default function OnboardingScreen() {
 
             {/* Explicación */}
             <Text className="font-nunito text-base text-center mb-10" style={{ color: '#555', lineHeight: 24 }}>
-              HiC utiliza la cámara para que puedas tomar fotos de tus comidas y registrar tu progreso visual de forma sencilla.
+              BETTY utiliza la cámara para que puedas tomar fotos de tus comidas y registrar tu progreso visual de forma sencilla.
             </Text>
 
             {/* Botones */}
@@ -325,7 +322,7 @@ export default function OnboardingScreen() {
 
             {/* Explicación */}
             <Text className="font-nunito text-base text-center mb-10" style={{ color: '#555', lineHeight: 24 }}>
-              Activa las notificaciones para que HiC te recuerde tomar agua y registrar tus metas a lo largo del día.
+              Activa las notificaciones para que BETTY te recuerde tomar agua y registrar tus metas a lo largo del día.
             </Text>
 
             {/* Botones */}
@@ -428,15 +425,19 @@ export default function OnboardingScreen() {
   // Steps 2 and 3 render their own action buttons inside the step content
   const hasCustomButtons = step === 2 || step === 3;
 
-  const headerTitle = () => {
-    if (step === 1) return 'Cómo funciona HiC';
-    if (step === 2) return 'Permisos de cámara';
-    if (step === 3) return 'Notificaciones';
-    if (step >= 4 && step <= 7) return `Paso ${step - 3} de 4`;
-    if (step === 8) return `Meta de ${CATEGORY_LABEL['alimentacion']}`;
-    if (step === 9) return `Meta de ${CATEGORY_LABEL['actividad']}`;
-    if (step === 10) return `Meta de ${CATEGORY_LABEL['sueno']}`;
-    return '';
+  const renderHeaderTitle = () => {
+    if (step === 0 || step === 11) return '';
+
+    const progress = step / 10; // Steps 1 to 10
+
+    return (
+      <View className="w-full h-2 bg-[#e6dce1] rounded-full overflow-hidden mt-1">
+        <View 
+          className="h-full bg-[#522c45] rounded-full" 
+          style={{ width: `${progress * 100}%` }} 
+        />
+      </View>
+    );
   };
 
   return (
@@ -446,7 +447,7 @@ export default function OnboardingScreen() {
       className={isWelcome ? '' : 'bg-bg'}
     >
       <ScreenHeader
-        title={headerTitle()}
+        title={renderHeaderTitle()}
         showBack={step > 0 && step < 11}
         onBack={() => setStep((step - 1) as Step)}
       />
@@ -477,10 +478,16 @@ function GoalStep({ cat, dias, setDias, titulo, setTitulo, error, setError }: { 
     sueno: 'Ej. Apagar pantallas a las 9pm'
   };
 
+  const MASCOT_IMAGES = {
+    alimentacion: require('../../assets/sonrisas_alimentacion.png'),
+    actividad: require('../../assets/sonrisas_actividad.png'),
+    sueno: require('../../assets/sonrisas_sueno.png'),
+  };
+
   return (
     <View className="flex-1 justify-center items-center">
-      <View className="w-20 h-20 rounded-full items-center justify-center mb-6" style={{ backgroundColor: CATEGORY_TINT[cat] }}>
-        <Icon name={CATEGORY_ICON[cat]} size={40} color={CATEGORY_FG[cat]} />
+      <View className="mb-6">
+        <Image source={MASCOT_IMAGES[cat]} style={{ width: 140, height: 140 }} resizeMode="contain" />
       </View>
       <Text className="font-fredoka text-primary text-3xl mb-4 text-center" adjustsFontSizeToFit numberOfLines={2}>
         Meta de {CATEGORY_LABEL[cat]}
