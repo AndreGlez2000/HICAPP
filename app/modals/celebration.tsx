@@ -1,8 +1,10 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, Animated } from 'react-native';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, Dimensions, Animated, Image } from 'react-native';
 import { router } from 'expo-router';
 import { Button } from '../../components/primitives/Button';
 import { useHicStore } from '../../store';
+import { buildCompletedMaps, getCompletedSetForLocalDate } from '../../utils/report-range';
+import { getLocalDateKey } from '../../utils/date-keys';
 
 const { width, height } = Dimensions.get('window');
 
@@ -19,23 +21,57 @@ const CONFETTI_DOTS = [
   { x: 0.30, y: 0.55, size: 11, color: '#e87a3f', delay: 80  },
 ];
 
+const MASCOT_MESSAGES = [
+  "¡Sigue así, campeón!",
+  "¡Eres imparable!",
+  "¡Qué gran esfuerzo!",
+  "¡Excelente trabajo!",
+  "¡Vas por muy buen camino!",
+  "¡Esa es la actitud!",
+  "¡Lo estás haciendo genial!",
+];
+
 export default function CelebrationModal() {
   const clearNavigationContext = useHicStore((s) => s.clearNavigationContext);
   const modalMessage = useHicStore((s) => s.navigationContext.modalMessage);
+  const miDiaLog = useHicStore((s) => s.miDiaLog);
 
-  // Trophy animation
+  // Random message
+  const [randomMessage, setRandomMessage] = useState(MASCOT_MESSAGES[0]);
+
+  // Streak logic
+  const streak = useMemo(() => {
+    const { completedByDate } = buildCompletedMaps(miDiaLog);
+    const today = new Date();
+    const todayKey = getLocalDateKey(today);
+    const todaySet = getCompletedSetForLocalDate(completedByDate, todayKey);
+    const todayComplete = (['alimentacion', 'actividad', 'sueno'] as const).every((cat) => todaySet.has(cat));
+    if (!todayComplete) return 0;
+
+    let count = 0;
+    const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    while (true) {
+      const dateKey = getLocalDateKey(cursor);
+      const completedSet = getCompletedSetForLocalDate(completedByDate, dateKey);
+      const isComplete = (['alimentacion', 'actividad', 'sueno'] as const).every((cat) => completedSet.has(cat));
+      if (!isComplete) break;
+      count += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return count;
+  }, [miDiaLog]);
+
+  const oldStreak = Math.max(0, streak - 1);
+
+  // Animations
   const trophyScale = useRef(new Animated.Value(0)).current;
   const trophyOpacity = useRef(new Animated.Value(0)).current;
-
-  // Content animation
   const contentOpacity = useRef(new Animated.Value(0)).current;
   const contentTranslate = useRef(new Animated.Value(30)).current;
-
-  // CTA animation
   const ctaOpacity = useRef(new Animated.Value(0)).current;
   const ctaScale = useRef(new Animated.Value(0.8)).current;
+  const tickerAnim = useRef(new Animated.Value(0)).current;
 
-  // Confetti animations
   const confettiAnims = useRef(
     CONFETTI_DOTS.map(() => ({
       opacity: new Animated.Value(0),
@@ -44,6 +80,8 @@ export default function CelebrationModal() {
   ).current;
 
   useEffect(() => {
+    setRandomMessage(MASCOT_MESSAGES[Math.floor(Math.random() * MASCOT_MESSAGES.length)]);
+
     // Trophy pop
     Animated.parallel([
       Animated.timing(trophyOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
@@ -75,12 +113,30 @@ export default function CelebrationModal() {
         ),
       ]).start();
     });
-  }, []);
+
+    // Streak increment animation (odometer effect)
+    if (streak > 0 && oldStreak !== streak) {
+      const timer = setTimeout(() => {
+        Animated.spring(tickerAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }).start();
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [streak]);
 
   const handleClose = () => {
     clearNavigationContext();
     router.replace('/(tabs)/metas');
   };
+
+  const tickerTranslateY = tickerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -32], // Adjust to exactly the height of the number
+  });
 
   return (
     <View style={styles.container}>
@@ -102,10 +158,17 @@ export default function CelebrationModal() {
         />
       ))}
 
-      {/* Trophy */}
-      <Animated.View style={[styles.trophyCircle, { opacity: trophyOpacity, transform: [{ scale: trophyScale }] }]}>
-        <Text style={styles.trophyEmoji}>🏆</Text>
-      </Animated.View>
+      {/* Mascot (Sonrisas) Celebration with Bubble */}
+      <View style={styles.mascotContainer}>
+        <Animated.View style={[styles.speechBubble, { opacity: trophyOpacity, transform: [{ scale: trophyScale }] }]}>
+          <Text style={styles.speechText}>{randomMessage}</Text>
+          <View style={styles.speechPointer} />
+        </Animated.View>
+
+        <Animated.View style={[styles.trophyCircle, { opacity: trophyOpacity, transform: [{ scale: trophyScale }] }]}>
+          <Image source={require('../../assets/sonrisas.png')} style={{ width: 150, height: 150 }} resizeMode="contain" />
+        </Animated.View>
+      </View>
 
       {/* Content */}
       <Animated.View style={[styles.contentBlock, { opacity: contentOpacity, transform: [{ translateY: contentTranslate }] }]}>
@@ -119,10 +182,22 @@ export default function CelebrationModal() {
           <Text style={styles.subtitle}>Completaste los 3 hábitos del día. ¡Increíble!</Text>
         )}
 
-        <View style={styles.streakChip}>
-          <Text style={styles.streakEmoji}>🔥</Text>
-          <Text style={styles.streakText}>¡Sigue así, campeón!</Text>
-        </View>
+        {streak > 0 && (
+          <View style={styles.streakChip}>
+            <Text style={styles.streakEmoji}>🔥</Text>
+            <Text style={styles.streakLabel}>Racha actual:</Text>
+            
+            {/* Odometer Animation */}
+            <View style={styles.tickerContainer}>
+              <Animated.View style={{ transform: [{ translateY: tickerTranslateY }] }}>
+                <Text style={styles.tickerNumber}>{oldStreak}</Text>
+                <Text style={styles.tickerNumber}>{streak}</Text>
+              </Animated.View>
+            </View>
+
+            <Text style={styles.streakSuffix}>{streak === 1 ? 'día' : 'días'}</Text>
+          </View>
+        )}
       </Animated.View>
 
       {/* CTA */}
@@ -141,22 +216,52 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 32,
   },
+  mascotContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+    marginTop: -40,
+  },
+  speechBubble: {
+    backgroundColor: '#e87a3f',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginBottom: 12,
+    position: 'relative',
+    shadowColor: '#e87a3f',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+    maxWidth: 250,
+  },
+  speechText: {
+    fontFamily: 'Nunito_700Bold',
+    fontSize: 16,
+    color: '#fff',
+    textAlign: 'center',
+  },
+  speechPointer: {
+    position: 'absolute',
+    bottom: -8,
+    alignSelf: 'center',
+    width: 0,
+    height: 0,
+    borderLeftWidth: 8,
+    borderRightWidth: 8,
+    borderTopWidth: 10,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#e87a3f',
+  },
   trophyCircle: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#fdf0e8',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 28,
-    shadowColor: '#e87a3f',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 8,
-  },
-  trophyEmoji: {
-    fontSize: 56,
+    marginBottom: 16,
   },
   contentBlock: {
     alignItems: 'center',
@@ -194,11 +299,11 @@ const styles = StyleSheet.create({
   streakChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
     backgroundColor: '#fff',
     borderRadius: 999,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
     borderWidth: 1.5,
     borderColor: '#fde8d6',
     marginBottom: 32,
@@ -209,12 +314,32 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   streakEmoji: {
-    fontSize: 20,
+    fontSize: 26,
+    marginRight: 4,
   },
-  streakText: {
+  streakLabel: {
     fontFamily: 'Nunito_700Bold',
-    fontSize: 15,
+    fontSize: 18,
+    color: '#70787c',
+  },
+  tickerContainer: {
+    height: 32,
+    overflow: 'hidden',
+    justifyContent: 'flex-start',
+  },
+  tickerNumber: {
+    fontFamily: 'Fredoka_700Bold',
+    fontSize: 28,
     color: '#e87a3f',
+    height: 32,
+    lineHeight: 32,
+    textAlign: 'center',
+  },
+  streakSuffix: {
+    fontFamily: 'Nunito_700Bold',
+    fontSize: 18,
+    color: '#e87a3f',
+    marginTop: 2, // Slight alignment tweak for Nunito vs Fredoka
   },
   ctaContainer: {
     position: 'absolute',

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Image } from 'react-native';
 import { router } from 'expo-router';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -239,17 +239,24 @@ function AdherenceSection({ adherence }: { adherence: AdherenceData[] }): React.
 
 function StreakCard({ streak }: { streak: number }): React.JSX.Element {
   return (
-    <Card padded className="mb-4 items-center">
-      <SectionTitle title="Racha actual" />
-      <Text
-        className="font-fredoka"
-        style={{ fontSize: 72, color: '#e87a3f', lineHeight: 80 }}
-      >
-        {streak}
-      </Text>
-      <Text className="font-nunito text-sm text-muted mt-1">
-        {streak === 1 ? 'día seguido' : 'días seguidos'}
-      </Text>
+    <Card padded className="mb-4 items-center flex-row justify-center">
+      <View className="items-center z-10 mr-[-20px] bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <SectionTitle title="Racha actual" />
+        <Text
+          className="font-fredoka"
+          style={{ fontSize: 72, color: '#e87a3f', lineHeight: 80 }}
+        >
+          {streak}
+        </Text>
+        <Text className="font-nunito text-sm text-muted mt-1">
+          {streak === 1 ? 'día seguido' : 'días seguidos'}
+        </Text>
+      </View>
+      <Image 
+        source={require('../../assets/sonrisas.png')} 
+        style={{ width: 120, height: 120 }} 
+        resizeMode="contain" 
+      />
     </Card>
   );
 }
