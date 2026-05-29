@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, SafeAreaView } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, TouchableOpacity, Modal, InteractionManager } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Wheely from 'react-native-wheely';
 
 interface WheelPickerProps {
@@ -17,8 +18,13 @@ interface WheelPickerProps {
 
 export function WheelPicker({ label, items, selectedIndex, onChange, unit }: WheelPickerProps) {
   const [open, setOpen] = useState(false);
-  const [tempIndex, setTempIndex] = useState(selectedIndex);
-  const [renderKey, setRenderKey] = useState(0);
+  const safeIndex = useMemo(() => {
+    if (!Number.isFinite(selectedIndex) || items.length === 0) return 0;
+    const clamped = Math.min(Math.max(0, Math.floor(selectedIndex)), items.length - 1);
+    return clamped;
+  }, [items.length, selectedIndex]);
+  const [tempIndex, setTempIndex] = useState(safeIndex);
+  const [wheelReady, setWheelReady] = useState(false);
 
   const handleOpen = () => {
     setOpen(true);
@@ -36,11 +42,15 @@ export function WheelPicker({ label, items, selectedIndex, onChange, unit }: Whe
   useEffect(() => {
     if (!open) return;
     const raf = requestAnimationFrame(() => {
-      setTempIndex(selectedIndex);
-      setRenderKey((k) => k + 1);
+      setTempIndex(safeIndex);
     });
     return () => cancelAnimationFrame(raf);
-  }, [open, selectedIndex]);
+  }, [open, safeIndex]);
+
+  useEffect(() => {
+    if (open) return;
+    setWheelReady(false);
+  }, [open]);
 
   return (
     <>
@@ -56,7 +66,7 @@ export function WheelPicker({ label, items, selectedIndex, onChange, unit }: Whe
           style={{ height: 48, borderRadius: 12 }}
         >
           <Text className="font-nunito text-base text-ink flex-1">
-            {items[selectedIndex]}
+            {items[safeIndex] ?? ''}
           </Text>
           {unit && (
             <Text className="font-nunito-bold text-muted text-base">{unit}</Text>
@@ -70,6 +80,12 @@ export function WheelPicker({ label, items, selectedIndex, onChange, unit }: Whe
         transparent
         animationType="slide"
         onRequestClose={handleCancel}
+        onShow={() => {
+          InteractionManager.runAfterInteractions(() => {
+            setTimeout(() => setWheelReady(true), 50);
+          });
+        }}
+        onDismiss={() => setWheelReady(false)}
       >
         <TouchableOpacity
           style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}
@@ -95,17 +111,18 @@ export function WheelPicker({ label, items, selectedIndex, onChange, unit }: Whe
 
           {/* Drum roll — key fuerza re-mount cuando abre para mostrar el valor inicial */}
           <View className="flex-row items-center justify-center py-4">
-            <Wheely
-              key={`wheel-${items[0]}-${renderKey}`}
-              options={items}
-              selectedIndex={tempIndex}
-              onChange={setTempIndex}
-              itemHeight={44}
-              visibleRest={2}
-              containerStyle={{ width: 120 }}
-              selectedIndicatorStyle={{ backgroundColor: '#f5eef2' }}
-              itemTextStyle={{ fontFamily: 'Nunito_400Regular', color: '#0f172a', fontSize: 20 }}
-            />
+            {wheelReady && (
+              <Wheely
+                options={items}
+                selectedIndex={tempIndex}
+                onChange={setTempIndex}
+                itemHeight={44}
+                visibleRest={2}
+                containerStyle={{ width: 120, height: 220 }}
+                selectedIndicatorStyle={{ backgroundColor: '#f5eef2' }}
+                itemTextStyle={{ color: '#0f172a', fontSize: 20 }}
+              />
+            )}
             {unit && (
               <Text className="font-nunito-bold text-xl text-ink ml-2">{unit}</Text>
             )}

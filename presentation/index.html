@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="es-MX">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HICAPP | Presentacion</title>
+    <meta
+      name="description"
+      content="Presentacion ejecutiva de HICAPP: problema, solucion, arquitectura y roadmap."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span>HICAPP</span>
+      </div>
+      <nav class="nav" aria-label="Secciones">
+        <a href="#portada">Portada</a>
+        <a href="#problema">Problema</a>
+        <a href="#solucion">Solucion</a>
+        <a href="#arquitectura">Arquitectura</a>
+        <a href="#funcionalidades">Funcionalidades</a>
+        <a href="#demo">Demo</a>
+        <a href="#roadmap">Roadmap</a>
+        <a href="#equipo">Equipo</a>
+        <a href="#cierre">Cierre</a>
+      </nav>
+      <button class="mode" type="button" aria-label="Cambiar contraste">
+        Contraste
+      </button>
+    </header>
+    <div class="progress" aria-hidden="true"><span></span></div>
+
+    <main>
+      <section id="portada" class="section hero" data-notes="Aterriza proposito y audiencia. 15-20s.">
+        <div class="hero-content">
+          <p class="eyebrow">Presentacion ejecutiva</p>
+          <h1>HICAPP</h1>
+          <p class="subtitle">
+            Bienestar diario con seguimiento simple, visual y humano.
+          </p>
+          <div class="hero-cards">
+            <div class="card">
+              <h3>Objetivo</h3>
+              <p>Mejorar habitos con micro acciones y retroalimentacion clara.</p>
+            </div>
+            <div class="card">
+              <h3>Impacto</h3>
+              <p>Mas consistencia, menos friccion, decisiones guiadas por datos.</p>
+            </div>
+            <div class="card">
+              <h3>Estado</h3>
+              <p>Producto funcional con base de datos local y flujos clave.</p>
+            </div>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="orb orb-1"></div>
+          <div class="orb orb-2"></div>
+          <div class="stack">
+            <div class="stack-card">Metas</div>
+            <div class="stack-card">Dia</div>
+            <div class="stack-card">Fotos</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="problema" class="section" data-notes="Enfatiza dolor: falta de claridad y continuidad.">
+        <div class="section-header">
+          <p class="eyebrow">Problema</p>
+          <h2>Los habitos se pierden por falta de contexto diario</h2>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Friccion alta</h3>
+            <p>Registrar avances es tardado y no se siente relevante.</p>
+          </div>
+          <div class="card">
+            <h3>Sin retroalimentacion</h3>
+            <p>Los datos no se convierten en decisiones accionables.</p>
+          </div>
+          <div class="card">
+            <h3>Baja motivacion</h3>
+            <p>Los recordatorios se vuelven ruido sin narrativa.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="solucion" class="section" data-notes="Conecta solucion con habitos y data accionable.">
+        <div class="section-header">
+          <p class="eyebrow">Solucion</p>
+          <h2>Una experiencia diaria breve que cierra el loop</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card highlight">
+            <h3>Check-in rapido</h3>
+            <p>Una pantalla al dia con metas, energia y fotos.</p>
+          </div>
+          <div class="card">
+            <h3>Metas con recordatorio</h3>
+            <p>Metas semanales que se renuevan automaticamente.</p>
+          </div>
+          <div class="card">
+            <h3>Reportes con historia</h3>
+            <p>Resumen mensual que traduce datos a progreso visible.</p>
+          </div>
+          <div class="card">
+            <h3>Interfaz empatica</h3>
+            <p>Lenguaje cercano, visual y sin sobrecarga cognitiva.</p>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="arquitectura"
+        class="section"
+        data-notes="Explica capas principales, sin entrar en detalle tecnico.">
+        <div class="section-header">
+          <p class="eyebrow">Arquitectura</p>
+          <h2>Capas simples, datos locales y servicios claros</h2>
+        </div>
+        <div class="architecture">
+          <div class="arch-column">
+            <h3>App (UI)</h3>
+            <p>Vistas por tabs, modales de captura y flujos guiados.</p>
+          </div>
+          <div class="arch-column">
+            <h3>Estado</h3>
+            <p>Store para metas, dia actual, fotos y perfil.</p>
+          </div>
+          <div class="arch-column">
+            <h3>Datos</h3>
+            <p>Base local con esquemas para metas, fotos y reportes.</p>
+          </div>
+          <div class="arch-column">
+            <h3>Servicios</h3>
+            <p>Notificaciones, PDF mensual y utilidades de tiempo.</p>
+          </div>
+        </div>
+        <div class="arch-flow" aria-hidden="true">
+          <span>UI</span>
+          <span>Store</span>
+          <span>DB</span>
+          <span>Servicios</span>
+        </div>
+      </section>
+
+      <section
+        id="funcionalidades"
+        class="section"
+        data-notes="Lista quick wins y valor inmediato.">
+        <div class="section-header">
+          <p class="eyebrow">Funcionalidades</p>
+          <h2>Lo que el usuario ya puede hacer hoy</h2>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Metas inteligentes</h3>
+            <p>Crear, renovar y celebrar metas cumplidas.</p>
+          </div>
+          <div class="card">
+            <h3>Registro diario</h3>
+            <p>Seleccionar habitos, energia y estado emocional.</p>
+          </div>
+          <div class="card">
+            <h3>Galeria y fotos</h3>
+            <p>Captura de momentos para reforzar motivacion.</p>
+          </div>
+          <div class="card">
+            <h3>Perfil personal</h3>
+            <p>Datos y preferencias para ajustar recordatorios.</p>
+          </div>
+          <div class="card">
+            <h3>Reporte mensual</h3>
+            <p>PDF con resumen de progreso y tendencias.</p>
+          </div>
+          <div class="card">
+            <h3>Notificaciones</h3>
+            <p>Recordatorios sin saturar, con horarios definidos.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="demo" class="section" data-notes="Guiar demo de 90s.">
+        <div class="section-header">
+          <p class="eyebrow">Demo flow</p>
+          <h2>Recorrido en 6 pasos</h2>
+        </div>
+        <ol class="timeline">
+          <li>
+            <span class="step">1</span>
+            <div>
+              <h3>Inicio y bienvenida</h3>
+              <p>Mensaje corto que explica el dia.</p>
+            </div>
+          </li>
+          <li>
+            <span class="step">2</span>
+            <div>
+              <h3>Metas activas</h3>
+              <p>Se muestran metas y progreso semanal.</p>
+            </div>
+          </li>
+          <li>
+            <span class="step">3</span>
+            <div>
+              <h3>Registro rapido</h3>
+              <p>Seleccionar actividades y energia.</p>
+            </div>
+          </li>
+          <li>
+            <span class="step">4</span>
+            <div>
+              <h3>Fotos del dia</h3>
+              <p>Agregar evidencia visual en segundos.</p>
+            </div>
+          </li>
+          <li>
+            <span class="step">5</span>
+            <div>
+              <h3>Celebracion</h3>
+              <p>Modal con reconocimiento al completar metas.</p>
+            </div>
+          </li>
+          <li>
+            <span class="step">6</span>
+            <div>
+              <h3>Reporte mensual</h3>
+              <p>Resumen PDF listo para compartir.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section id="roadmap" class="section" data-notes="Siguiente trimestre, metas claras.">
+        <div class="section-header">
+          <p class="eyebrow">Roadmap</p>
+          <h2>Lo que sigue en los proximos 3 meses</h2>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Mes 1</h3>
+            <p>Analitica de habitos y alertas de riesgo.</p>
+          </div>
+          <div class="card">
+            <h3>Mes 2</h3>
+            <p>Recomendaciones personalizadas con IA ligera.</p>
+          </div>
+          <div class="card">
+            <h3>Mes 3</h3>
+            <p>Sincronizacion en nube y respaldo seguro.</p>
+          </div>
+          <div class="card">
+            <h3>Exploracion</h3>
+            <p>Programas para familias y equipos de salud.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="equipo" class="section" data-notes="Presenta roles, no nombres.">
+        <div class="section-header">
+          <p class="eyebrow">Equipo</p>
+          <h2>Equipo multidisciplinario</h2>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Producto</h3>
+            <p>Vision, backlog y validacion con usuarios.</p>
+          </div>
+          <div class="card">
+            <h3>Ingenieria</h3>
+            <p>Arquitectura, experiencia movil y calidad.</p>
+          </div>
+          <div class="card">
+            <h3>Diseño</h3>
+            <p>Interfaz empatica, accesibilidad y pruebas.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="cierre" class="section outro" data-notes="Cierra con llamada a accion.">
+        <div class="section-header">
+          <p class="eyebrow">Cierre</p>
+          <h2>HICAPP convierte intencion en accion diaria</h2>
+        </div>
+        <div class="cta">
+          <p>Listos para la siguiente etapa: pilotos y medicion de impacto.</p>
+          <button type="button" class="primary">Gracias</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>HICAPP | Presentacion</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

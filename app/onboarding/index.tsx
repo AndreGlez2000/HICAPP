@@ -24,7 +24,7 @@ const TALLA_MIN = 80;
 const TALLA_ITEMS = Array.from({ length: 141 }, (_, i) => String(i + TALLA_MIN)); // '80'..'220'
 const TALLA_DEFAULT = 150; // cm
 
-type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
+type Step = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
 
 export default function OnboardingScreen() {
   const [step, setStep] = useState<Step>(0);
@@ -66,14 +66,14 @@ export default function OnboardingScreen() {
       if (!dob.trim()) return setError('Por favor, ingresa tu fecha de nacimiento');
     }
 
-    if (step === 8 && !alimentacionTitulo.trim()) return setError('Ingresa una descripción para la meta');
-    if (step === 8 && alimentacionDias === 0) return setError('Selecciona al menos 1 día');
-    if (step === 9 && !actividadTitulo.trim()) return setError('Ingresa una descripción para la meta');
-    if (step === 9 && actividadDias === 0) return setError('Selecciona al menos 1 día');
-    if (step === 10 && !suenoTitulo.trim()) return setError('Ingresa una descripción para la meta');
-    if (step === 10 && suenoDias === 0) return setError('Selecciona al menos 1 día');
+    if (step === 10 && !alimentacionTitulo.trim()) return setError('Ingresa una descripción para la meta');
+    if (step === 10 && alimentacionDias === 0) return setError('Selecciona al menos 1 día');
+    if (step === 11 && !actividadTitulo.trim()) return setError('Ingresa una descripción para la meta');
+    if (step === 11 && actividadDias === 0) return setError('Selecciona al menos 1 día');
+    if (step === 12 && !suenoTitulo.trim()) return setError('Ingresa una descripción para la meta');
+    if (step === 12 && suenoDias === 0) return setError('Selecciona al menos 1 día');
 
-    if (step < 10) {
+    if (step < 12) {
       nextStep((step + 1) as Step);
     } else {
       finishOnboarding();
@@ -81,7 +81,7 @@ export default function OnboardingScreen() {
   };
 
   const finishOnboarding = async () => {
-    setStep(11);
+    setStep(13);
     try {
       const edad = calculateAge(dob);
       const currentMonth = getLocalMonthKey(new Date());
@@ -136,7 +136,7 @@ export default function OnboardingScreen() {
     } catch (err) {
       // Transaction automatically rolled back on throw — DB state is clean
       Alert.alert('Error al guardar', 'Intenta de nuevo');
-      setStep(10);
+      setStep(12);
     }
   };
 
@@ -153,7 +153,7 @@ export default function OnboardingScreen() {
   };
 
   const handleDemoMode = async () => {
-    setStep(11); // show loading spinner
+    setStep(13); // show loading spinner
     try {
       await loadDemoDataFresh();
       await useHicStore.getState().loadFromDB();
@@ -227,43 +227,17 @@ export default function OnboardingScreen() {
               BETTY te ayuda a llevar un registro de tus hábitos de alimentación, actividad física y sueño para que puedas alcanzar tus metas de salud.
             </Text>
 
-            {/* Filas de características */}
-            <View className="w-full gap-4">
-              <View className="flex-row items-center gap-3">
-                <View
-                  className="w-10 h-10 rounded-full items-center justify-center"
-                  style={{ backgroundColor: CATEGORY_TINT['alimentacion'] }}
-                >
-                  <Icon name={CATEGORY_ICON['alimentacion']} size={20} color={CATEGORY_FG['alimentacion']} />
-                </View>
-                <Text className="font-nunito text-sm flex-1" style={{ color: '#333', lineHeight: 20 }}>
-                  Registra tus comidas y conoce tu progreso diario.
-                </Text>
-              </View>
-
-              <View className="flex-row items-center gap-3">
-                <View
-                  className="w-10 h-10 rounded-full items-center justify-center"
-                  style={{ backgroundColor: CATEGORY_TINT['actividad'] }}
-                >
-                  <Icon name={CATEGORY_ICON['actividad']} size={20} color={CATEGORY_FG['actividad']} />
-                </View>
-                <Text className="font-nunito text-sm flex-1" style={{ color: '#333', lineHeight: 20 }}>
-                  Mantén el control de tu actividad física semanal.
-                </Text>
-              </View>
-
-              <View className="flex-row items-center gap-3">
-                <View
-                  className="w-10 h-10 rounded-full items-center justify-center"
-                  style={{ backgroundColor: CATEGORY_TINT['sueno'] }}
-                >
-                  <Icon name={CATEGORY_ICON['sueno']} size={20} color={CATEGORY_FG['sueno']} />
-                </View>
-                <Text className="font-nunito text-sm flex-1" style={{ color: '#333', lineHeight: 20 }}>
-                  Cuida tu descanso y establece metas de sueño saludables.
-                </Text>
-              </View>
+            {/* Lista de beneficios */}
+            <View className="w-full gap-3" style={{ paddingHorizontal: 8 }}>
+              <Text className="font-nunito text-base" style={{ color: '#333', lineHeight: 22 }}>
+                • registrar comida
+              </Text>
+              <Text className="font-nunito text-base" style={{ color: '#333', lineHeight: 22 }}>
+                • mantener el control
+              </Text>
+              <Text className="font-nunito text-base" style={{ color: '#333', lineHeight: 22 }}>
+                • cuida tu descanso
+              </Text>
             </View>
           </View>
         );
@@ -366,14 +340,21 @@ export default function OnboardingScreen() {
         );
       case 6:
         return (
-          <View className="flex-1 justify-center gap-6">
-            <Text className="font-fredoka text-primary text-3xl mb-2">Tus datos</Text>
+          <View className="flex-1 justify-center">
+            <Text className="font-fredoka text-primary text-3xl mb-6">Tus datos</Text>
             <DatePickerField
               label="Fecha de nacimiento"
               value={dob}
               onChange={(iso) => { setDob(iso); setError(''); }}
               maxDate={maxDob}
             />
+            {error ? <Text className="font-nunito text-xs text-red-600 mt-2">{error}</Text> : null}
+          </View>
+        );
+      case 7:
+        return (
+          <View className="flex-1 justify-center">
+            <Text className="font-fredoka text-primary text-3xl mb-6">Tus datos</Text>
             <WheelPicker
               label="Peso"
               items={PESO_ITEMS}
@@ -381,6 +362,12 @@ export default function OnboardingScreen() {
               onChange={(i) => setPeso(i + PESO_MIN)}
               unit="kg"
             />
+          </View>
+        );
+      case 8:
+        return (
+          <View className="flex-1 justify-center">
+            <Text className="font-fredoka text-primary text-3xl mb-6">Tus datos</Text>
             <WheelPicker
               label="Estatura"
               items={TALLA_ITEMS}
@@ -388,10 +375,9 @@ export default function OnboardingScreen() {
               onChange={(i) => setTalla(i + TALLA_MIN)}
               unit="cm"
             />
-            {error ? <Text className="font-nunito text-xs text-red-600 mt-1">{error}</Text> : null}
           </View>
         );
-      case 7:
+      case 9:
         return (
           <View className="flex-1 justify-center">
             <Text className="font-fredoka text-primary text-3xl mb-6">Número de Expediente</Text>
@@ -406,13 +392,13 @@ export default function OnboardingScreen() {
             </TouchableOpacity>
           </View>
         );
-      case 8:
-        return <GoalStep cat="alimentacion" dias={alimentacionDias} setDias={setAlimentacionDias} titulo={alimentacionTitulo} setTitulo={setAlimentacionTitulo} error={error} setError={setError} />;
-      case 9:
-        return <GoalStep cat="actividad" dias={actividadDias} setDias={setActividadDias} titulo={actividadTitulo} setTitulo={setActividadTitulo} error={error} setError={setError} />;
       case 10:
-        return <GoalStep cat="sueno" dias={suenoDias} setDias={setSuenoDias} titulo={suenoTitulo} setTitulo={setSuenoTitulo} error={error} setError={setError} />;
+        return <GoalStep cat="alimentacion" dias={alimentacionDias} setDias={setAlimentacionDias} titulo={alimentacionTitulo} setTitulo={setAlimentacionTitulo} error={error} setError={setError} />;
       case 11:
+        return <GoalStep cat="actividad" dias={actividadDias} setDias={setActividadDias} titulo={actividadTitulo} setTitulo={setActividadTitulo} error={error} setError={setError} />;
+      case 12:
+        return <GoalStep cat="sueno" dias={suenoDias} setDias={setSuenoDias} titulo={suenoTitulo} setTitulo={setSuenoTitulo} error={error} setError={setError} />;
+      case 13:
         return (
           <View className="flex-1 justify-center items-center">
             <Text className="font-fredoka text-primary text-2xl text-center">Guardando...</Text>
@@ -426,9 +412,9 @@ export default function OnboardingScreen() {
   const hasCustomButtons = step === 2 || step === 3;
 
   const renderHeaderTitle = () => {
-    if (step === 0 || step === 11) return '';
+    if (step === 0 || step === 13) return '';
 
-    const progress = step / 10; // Steps 1 to 10
+    const progress = step / 12; // Steps 1 to 12
 
     return (
       <View className="w-full h-2 bg-[#e6dce1] rounded-full overflow-hidden mt-1">
@@ -448,7 +434,7 @@ export default function OnboardingScreen() {
     >
       <ScreenHeader
         title={renderHeaderTitle()}
-        showBack={step > 0 && step < 11}
+        showBack={step > 0 && step < 13}
         onBack={() => setStep((step - 1) as Step)}
       />
       <ScrollView
@@ -459,10 +445,10 @@ export default function OnboardingScreen() {
           {renderStep()}
         </View>
 
-        {step < 11 && !hasCustomButtons && (
+        {step < 13 && !hasCustomButtons && (
           <View className="pt-8 mt-auto">
             <Button onPress={handleNext}>
-              {step === 0 ? 'Comenzar' : step === 10 ? 'Finalizar' : 'Continuar'}
+              {step === 0 ? 'Comenzar' : step === 12 ? 'Finalizar' : 'Continuar'}
             </Button>
           </View>
         )}
